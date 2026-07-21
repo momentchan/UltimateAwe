@@ -1,0 +1,29 @@
+  150x  150  favicon.png
+ 2161x 3841  01 對位用圖\Loading.png
+ 2161x 3841  01 對位用圖\Output.png
+ 4321x 7681  02 各項元件\Background_2@.png
+ 3173x 2190  02 各項元件\BounzeeLv1_2@.png
+ 3172x 2190  02 各項元件\BounzeeLv2_2@.png
+ 3172x 2190  02 各項元件\BounzeeLv3_2@.png
+ 3654x  345  02 各項元件\Data Bar_2@.png
+ 3650x  435  02 各項元件\Distribution Bar_2@.png
+ 3173x 2189  02 各項元件\FadeeLv1_2@.png
+ 3172x 2189  02 各項元件\FadeeLv2_2@.png
+ 3172x 2189  02 各項元件\FadeeLv3_2@.png
+ 3173x 2189  02 各項元件\HuggeeLv1_2@.png
+ 3172x 2189  02 各項元件\HuggeeLv2_2@.png
+ 3172x 2189  02 各項元件\HuggeeLv3_2@.png
+ 3224x 2225  02 各項元件\LoadingFace_2@.png
+ 3173x 2190  02 各項元件\MisteeLv1_2@.png
+ 3172x 2190  02 各項元件\MisteeLv2_2@.png
+ 3172x 2190  02 各項元件\MisteeLv3_2@.png
+ 3223x 2225  02 各項元件\NormalFace_2@.png
+ 3392x 2992  02 各項元件\RadarChart_2@.png
+ 2249x  764  02 各項元件\Title_2@.png
+ 3173x 2190  02 各項元件\TwisteeLv1_2@.png
+ 3172x 2190  02 各項元件\TwisteeLv2_2@.png
+ 3172x 2190  02 各項元件\TwisteeLv3_2@.png
+  226x  175  02 各項元件\crown_2@.png
+  158x   80  02 各項元件\drop_2@.png
+  158x  177  02 各項元件\even_2@.png
+  158x   80  02 各項元件\raise_2@.png

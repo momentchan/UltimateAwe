@@ -1,0 +1,358 @@
+/* Ultimate a-We — fixed design canvas 2160 x 3840 */
+
+.ua-viewport {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.ua-stage-shell {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ua-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  background: #000;
+  overflow: hidden;
+}
+
+.ua-layout {
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui,
+    sans-serif;
+  user-select: none;
+}
+
+/* Background_2@.png is a black stencil with a transparent blob-shaped hole;
+   it must paint above .ua-blobfill so the fill shows through the hole. */
+.ua-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Loading color layer under the stencil. Hole bbox at 1x: x 286-1870, y 993-2086. */
+.ua-blobfill {
+  position: absolute;
+  left: 286px;
+  top: 993px;
+  width: 1585px;
+  height: 1094px;
+  z-index: 0;
+}
+
+/* WebGPU gradient canvas: full stage, self-masked by the stencil alpha */
+.ua-blobgpu {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.ua-blobgpu canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ua-blobfill--loading {
+  background: linear-gradient(
+    145deg,
+    #ececec 0%,
+    #b8b8b8 35%,
+    #8e8e8e 70%,
+    #d4d4d4 100%
+  );
+}
+
+.ua-guide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 0.45;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* Positions below are measured from the align map Output.png (2160x3840).
+   All part assets are 2x exports, rendered at half their pixel size. */
+
+.ua-header {
+  position: absolute;
+  top: 177px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+}
+
+.ua-title {
+  /* Title 2249x764 (2x) => 1122x382; align map: y 177-558, w 1125 */
+  width: 1122px;
+  height: auto;
+  display: block;
+}
+
+/* —— Hero: blob + face + radar labels —— */
+.ua-hero {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+
+.ua-hero__face {
+  position: absolute;
+  left: 50%;
+  /* Face sheet canvas maps onto blob bbox; center both at (1080, 1575) */
+  top: 1575px;
+  width: 1586px;
+  height: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+  /* Face sheets are black-backed; screen drops pure black */
+  mix-blend-mode: screen;
+}
+
+/* Normal/Loading face canvases are 3223/3224 x 2225 (2x) => ~1612px wide */
+.ua-hero__face--full {
+  width: 1612px;
+}
+
+.ua-hero__radar {
+  position: absolute;
+  /* RadarChart 3392x2992 (2x) => 1696x1496; align map content y 741-2223.
+     Canvas content is asymmetric: left 284px makes labels match the map exactly. */
+  left: 284px;
+  top: 740px;
+  width: 1696px;
+  height: auto;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+}
+
+/* —— Bottom stack: distribution + ranks —— */
+.ua-bottom {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.ua-dist {
+  position: absolute;
+  left: 50%;
+  top: 2426px;
+  transform: translateX(-50%);
+  /* Distribution Bar 3650x435 (2x) => 1825x217 at 1x (incl. drop pointer) */
+  width: 1825px;
+  height: 217px;
+}
+
+.ua-dist__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Fill measured on align map: frame x 170-1993, fill x 209-1954, y 2454-2551 */
+.ua-dist__fill {
+  position: absolute;
+  left: 39px;
+  right: 39px;
+  top: 28px;
+  height: 98px;
+  display: flex;
+  overflow: hidden;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+.ua-dist__fill--loading {
+  background: linear-gradient(
+    90deg,
+    #2a2a2a 0%,
+    #6a6a6a 45%,
+    #cfcfcf 100%
+  );
+}
+
+.ua-dist__seg {
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.ua-rank {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  left: 50%;
+  top: 2711px;
+  transform: translateX(-50%);
+  /* Data Bar 3654x345 (2x) => 1827x172 at 1x; rows every ~197px */
+  width: 1827px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.ua-rank__row {
+  position: relative;
+  height: 172px;
+  flex-shrink: 0;
+}
+
+.ua-rank__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+/* Column offsets measured on the align map (row-relative, row width 1827):
+   rank slot x 67-180, pct x 292+, zh x 645+, en x 896+, trend x 1669-1747 */
+
+.ua-rank__content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.ua-rank__content > * {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ua-rank__slot {
+  left: 67px;
+  width: 113px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ua-rank__crown {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 113px;
+  height: auto;
+}
+
+.ua-rank__place {
+  position: relative;
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Rank number sits dark on the white crown for top 2 */
+.ua-rank__slot--crowned .ua-rank__place {
+  color: #111;
+  font-size: 44px;
+  margin-top: 26px;
+}
+
+.ua-rank__pct {
+  left: 292px;
+  /* Digits ~100px tall on align map (band h=102) */
+  font-size: 136px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.ua-rank__pctsign {
+  font-size: 0.5em;
+  vertical-align: 0.75em;
+  margin-left: 0.04em;
+}
+
+.ua-rank__zh {
+  left: 645px;
+  font-size: 64px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ua-rank__en {
+  left: 896px;
+  font-size: 60px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.ua-rank__trend {
+  left: 1669px;
+  width: 79px;
+  height: auto;
+}
+
+.ua-rank__trend--even {
+  left: 1669px;
+  width: 79px;
+}
+
+/* Loading rows use different columns on the align map:
+   symbols x 294 (same as pct), ??型 x 794, no en */
+.ua-layout--loading .ua-rank__pct {
+  font-size: 96px;
+  letter-spacing: 0.02em;
+}
+
+.ua-layout--loading .ua-rank__zh {
+  left: 794px;
+}
+
+/* Dev toggles — not part of exhibition UI */
+.ua-dev {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+
+.ua-dev button {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ua-dev button.is-active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+}
