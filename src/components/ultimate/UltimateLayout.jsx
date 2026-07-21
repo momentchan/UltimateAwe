@@ -83,11 +83,11 @@ function RankingList({ entries, loading }) {
  * Output mode: WebGPU gradient shader masked by the stencil alpha.
  * Loading mode: simple silver CSS gradient.
  */
-function BlobFill({ loading }) {
+function BlobFill({ loading, entries }) {
   if (loading) {
     return <div className="ua-blobfill ua-blobfill--loading" />;
   }
-  return <BlobShaderFill />;
+  return <BlobShaderFill entries={entries} />;
 }
 
 function Hero({ leadingTypeId, level, loading }) {
@@ -115,7 +115,7 @@ export default function UltimateLayout({ data }) {
   return (
     <div className={`ua-layout ${loading ? "ua-layout--loading" : ""}`}>
       {/* Blob color layer sits under the stencil; shows through its hole */}
-      <BlobFill loading={loading} />
+      <BlobFill loading={loading} entries={data.distributionEntries} />
       <img className="ua-bg" src={ASSETS.background} alt="" draggable={false} />
 
       <header className="ua-header">
@@ -125,7 +125,10 @@ export default function UltimateLayout({ data }) {
       <Hero leadingTypeId={leading} level={data.level ?? 1} loading={loading} />
 
       <div className="ua-bottom">
-        <DistributionBar entries={data.entries} loading={loading} />
+        <DistributionBar
+          entries={data.distributionEntries}
+          loading={loading}
+        />
         <RankingList entries={data.entries} loading={loading} />
       </div>
     </div>

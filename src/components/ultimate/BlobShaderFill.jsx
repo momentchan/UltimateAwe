@@ -1,8 +1,9 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useLayoutEffect, useMemo } from "react";
 import { Canvas, extend, useLoader, useThree } from "@react-three/fiber";
 import { NodeMaterial, WebGPURenderer, TextureLoader } from "three/webgpu";
 import {
   color,
+  clamp,
   cos,
   length,
   mix,
@@ -10,11 +11,13 @@ import {
   smoothstep,
   texture,
   time,
+  uniform,
   uv,
   vec2,
   vec4,
 } from "three/tsl";
 import { ASSETS, TYPES, DESIGN } from "./assets";
+import { TYPE_ORDER } from "./ultimateData";
 
 extend({ NodeMaterial });
 
@@ -31,9 +34,26 @@ const LAYERS = [
   { type: "reflect", cx: 0.3, cy: 0.4, rx: 0.44, ry: 0.4, speed: 0.24, amp: 0.05, phase: 5.6 },
 ];
 
-function GradientPlane() {
+function GradientPlane({ entries }) {
   const maskTex = useLoader(TextureLoader, ASSETS.background);
   const size = useThree((s) => s.size);
+  const strengths = useMemo(
+    () =>
+      Object.fromEntries(
+        TYPE_ORDER.map((typeId) => [typeId, uniform(0)]),
+      ),
+    [],
+  );
+
+  useLayoutEffect(() => {
+    const percentages = Object.fromEntries(
+      entries.map((entry) => [entry.typeId, entry.percent]),
+    );
+    TYPE_ORDER.forEach((typeId) => {
+      // At 40% the color reaches its full designed intensity.
+      strengths[typeId].value = (percentages[typeId] ?? 0) / 40;
+    });
+  }, [entries, strengths]);
 
   const nodes = useMemo(() => {
     const u = uv();
@@ -53,7 +73,8 @@ function GradientPlane() {
       );
       const d = length(p.sub(center).div(vec2(l.rx, l.ry)));
       // Reversed-edge smoothstep is undefined in WGSL; invert explicitly
-      const w = smoothstep(0.0, 1.0, d).oneMinus();
+      const radial = smoothstep(0.0, 1.0, d).oneMinus();
+      const w = clamp(radial.mul(strengths[l.type]), 0, 1);
       c = mix(c, color(TYPES[l.type].color), w);
     }
 
@@ -64,7 +85,7 @@ function GradientPlane() {
       colorNode: vec4(c, 1),
       opacityNode: holeMask,
     };
-  }, [maskTex]);
+  }, [maskTex, strengths]);
 
   return (
     <mesh scale={[size.width, size.height, 1]} frustumCulled={false}>
@@ -85,7 +106,7 @@ function GradientPlane() {
  * Covers the whole design canvas; Background_2@.png alpha masks it
  * to the blob hole, so the shader itself never needs the outline.
  */
-export default function BlobShaderFill() {
+export default function BlobShaderFill({ entries }) {
   return (
     <div className="ua-blobgpu">
       <Canvas
@@ -103,7 +124,7 @@ export default function BlobShaderFill() {
         camera={{ position: [0, 0, 1], zoom: 1, near: 0.1, far: 10 }}
       >
         <Suspense fallback={null}>
-          <GradientPlane />
+          <GradientPlane entries={entries} />
         </Suspense>
       </Canvas>
     </div>

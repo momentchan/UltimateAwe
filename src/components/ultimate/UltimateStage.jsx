@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import UltimateLayout from "./UltimateLayout";
-import { DESIGN, SAMPLE_LOADING, SAMPLE_OUTPUT, ASSETS } from "./assets";
+import DebugCounterPanel from "./DebugCounterPanel";
+import useUltimateDebugData from "./useUltimateDebugData";
+import { DESIGN, ASSETS } from "./assets";
 import "./ultimate.css";
 
 /**
@@ -8,9 +10,10 @@ import "./ultimate.css";
  * Wrapper uses scaled footprint so transform does not push content off-screen.
  */
 export default function UltimateStage() {
-  const [mode, setMode] = useState("output");
+  const [mode, setMode] = useState("loading");
   const [showGuide, setShowGuide] = useState(false);
   const [scale, setScale] = useState(1);
+  const { data: computedData, increment, reset } = useUltimateDebugData();
 
   useEffect(() => {
     const update = () => {
@@ -26,9 +29,39 @@ export default function UltimateStage() {
   }, []);
 
   const data = useMemo(
-    () => (mode === "loading" ? SAMPLE_LOADING : SAMPLE_OUTPUT),
-    [mode],
+    () => ({
+      ...computedData,
+      mode,
+      entries: computedData.entries.map((entry) => ({
+        ...entry,
+        placeholder: mode === "loading",
+      })),
+    }),
+    [computedData, mode],
   );
+
+  const incrementType = useCallback(
+    (typeId) => {
+      increment(typeId);
+      setMode("output");
+    },
+    [increment],
+  );
+
+  const resetData = useCallback(() => {
+    reset();
+    setMode("loading");
+  }, [reset]);
+
+  useEffect(() => {
+    const showOutputAfterNumberKey = (event) => {
+      if (/^[1-5]$/.test(event.key)) {
+        setMode("output");
+      }
+    };
+    window.addEventListener("keyup", showOutputAfterNumberKey);
+    return () => window.removeEventListener("keyup", showOutputAfterNumberKey);
+  }, []);
 
   return (
     <div className="ua-viewport">
@@ -83,6 +116,12 @@ export default function UltimateStage() {
           Align guide
         </button>
       </div>
+
+      <DebugCounterPanel
+        data={computedData}
+        onIncrement={incrementType}
+        onReset={resetData}
+      />
     </div>
   );
 }
