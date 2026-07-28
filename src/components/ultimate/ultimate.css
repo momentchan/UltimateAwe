@@ -67,6 +67,52 @@
   height: 100% !important;
 }
 
+/* Layer position debug — sits over the blob hole (same bbox as .ua-blobfill) */
+.ua-blob-debug-host {
+  position: absolute;
+  left: 286px;
+  top: 993px;
+  width: 1585px;
+  height: 1094px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ua-blob-debug {
+  position: absolute;
+  inset: 0;
+}
+
+.ua-blob-debug__ellipse {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border: 3px dashed currentColor;
+  border-radius: 50%;
+  opacity: 0.55;
+  box-sizing: border-box;
+}
+
+.ua-blob-debug__dot {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
+}
+
+.ua-blob-debug__label {
+  position: absolute;
+  margin-top: 18px;
+  transform: translateX(-50%);
+  font: 700 28px/1 "Noto Sans TC", system-ui, sans-serif;
+  text-shadow:
+    0 0 6px #000,
+    0 1px 2px #000;
+  white-space: nowrap;
+}
+
 .ua-blobfill--loading {
   background: linear-gradient(
     145deg,
@@ -130,9 +176,13 @@
   mix-blend-mode: screen;
 }
 
-/* Normal/Loading face canvases are 3223/3224 x 2225 (2x) => ~1612px wide */
+/* LoadingFace_2@: white+alpha. Features sit low in the sheet; position
+   matched to Align Loading.png face (IoU sweep ≈ left 1087 / top 1509). */
 .ua-hero__face--full {
   width: 1612px;
+  top: 1509px;
+  left: 1087px;
+  mix-blend-mode: normal;
 }
 
 .ua-hero__radar {

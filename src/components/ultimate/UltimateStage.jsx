@@ -55,12 +55,13 @@ export default function UltimateStage() {
 
   useEffect(() => {
     const showOutputAfterNumberKey = (event) => {
+      if (event.repeat) return;
       if (/^[1-5]$/.test(event.key)) {
         setMode("output");
       }
     };
-    window.addEventListener("keyup", showOutputAfterNumberKey);
-    return () => window.removeEventListener("keyup", showOutputAfterNumberKey);
+    window.addEventListener("keydown", showOutputAfterNumberKey);
+    return () => window.removeEventListener("keydown", showOutputAfterNumberKey);
   }, []);
 
   return (
