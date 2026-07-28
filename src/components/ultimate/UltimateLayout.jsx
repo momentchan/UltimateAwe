@@ -78,18 +78,6 @@ function RankingList({ entries, loading }) {
   );
 }
 
-/**
- * Fills the blob-shaped hole punched in Background_2@.png.
- * Output mode: WebGPU gradient shader masked by the stencil alpha.
- * Loading mode: simple silver CSS gradient.
- */
-function BlobFill({ loading, entries }) {
-  if (loading) {
-    return <div className="ua-blobfill ua-blobfill--loading" />;
-  }
-  return <BlobShaderFill entries={entries} />;
-}
-
 function Hero({ leadingTypeId, level, loading }) {
   const face = loading
     ? ASSETS.faces.loading
@@ -115,7 +103,7 @@ export default function UltimateLayout({ data }) {
   return (
     <div className={`ua-layout ${loading ? "ua-layout--loading" : ""}`}>
       {/* Blob color layer sits under the stencil; shows through its hole */}
-      <BlobFill loading={loading} entries={data.distributionEntries} />
+      <BlobShaderFill loading={loading} entries={data.distributionEntries} />
       <img className="ua-bg" src={ASSETS.background} alt="" draggable={false} />
 
       <header className="ua-header">

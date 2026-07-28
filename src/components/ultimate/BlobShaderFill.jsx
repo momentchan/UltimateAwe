@@ -75,9 +75,67 @@ function syncLayerUniforms(layerUniforms, ctrl, percentages) {
   });
 }
 
-function GradientPlane({ entries, ctrl, layerUniforms }) {
+/** Soft metallic loading fill: highlight + shadow radials over a silver base
+ *  (matches Loading.png / design — not a linear CSS gradient). */
+function createLoadingUniforms() {
+  return {
+    base: uniform(new Color("#b4b2b0")),
+    sharp: uniform(2.56),
+    hiColor: uniform(new Color("#f0efed")),
+    hiCx: uniform(0.84),
+    hiCy: uniform(0.51),
+    hiRx: uniform(0.93),
+    hiRy: uniform(0.61),
+    hiStr: uniform(1.57),
+    loColor: uniform(new Color("#454140")),
+    loCx: uniform(0.27),
+    loCy: uniform(0.77),
+    loRx: uniform(0.85),
+    loRy: uniform(0.93),
+    loStr: uniform(1.58),
+  };
+}
+
+function syncLoadingUniforms(u, ctrl) {
+  u.base.value.set(ctrl.loadingBase);
+  u.sharp.value = ctrl.loadingSharpness;
+  u.hiColor.value.set(ctrl.loadingHiColor);
+  u.hiCx.value = ctrl.loadingHiCx;
+  u.hiCy.value = ctrl.loadingHiCy;
+  u.hiRx.value = ctrl.loadingHiRx;
+  u.hiRy.value = ctrl.loadingHiRy;
+  u.hiStr.value = ctrl.loadingHiStrength;
+  u.loColor.value.set(ctrl.loadingLoColor);
+  u.loCx.value = ctrl.loadingLoCx;
+  u.loCy.value = ctrl.loadingLoCy;
+  u.loRx.value = ctrl.loadingLoRx;
+  u.loRy.value = ctrl.loadingLoRy;
+  u.loStr.value = ctrl.loadingLoStrength;
+}
+
+function softRadialWeight(p, cx, cy, rx, ry, strength, sharp) {
+  const d = length(p.sub(vec2(cx, cy)).div(vec2(rx, ry)));
+  const radial = smoothstep(0.0, 1.0, d).oneMinus();
+  return pow(max(radial.mul(strength), 0), sharp);
+}
+
+function loadingMetallicFill(p, u) {
+  const wHi = softRadialWeight(p, u.hiCx, u.hiCy, u.hiRx, u.hiRy, u.hiStr, u.sharp);
+  const wLo = softRadialWeight(p, u.loCx, u.loCy, u.loRx, u.loRy, u.loStr, u.sharp);
+  const wBase = float(1);
+  const weightSum = wBase.add(wHi).add(wLo);
+  return color(u.base)
+    .mul(wBase)
+    .add(color(u.hiColor).mul(wHi))
+    .add(color(u.loColor).mul(wLo))
+    .div(max(weightSum, 1e-4));
+}
+
+function GradientPlane({ entries, loading, ctrl, layerUniforms }) {
   const maskTex = useLoader(TextureLoader, ASSETS.background);
   const size = useThree((s) => s.size);
+  const loadingU = useMemo(() => uniform(0), []);
+  const loadingParams = useMemo(() => createLoadingUniforms(), []);
   const baseColorU = useMemo(() => uniform(new Color("#c8c8c8")), []);
   const sharpnessU = useMemo(() => uniform(1.6), []);
   const vibranceU = useMemo(() => uniform(1.25), []);
@@ -86,10 +144,12 @@ function GradientPlane({ entries, ctrl, layerUniforms }) {
   const noiseSpeedU = useMemo(() => uniform(0.18), []);
 
   useLayoutEffect(() => {
-    const percentages = Object.fromEntries(
-      entries.map((entry) => [entry.typeId, entry.percent]),
-    );
+    loadingU.value = loading ? 1 : 0;
+    const percentages = loading
+      ? Object.fromEntries(TYPE_ORDER.map((id) => [id, 0]))
+      : Object.fromEntries(entries.map((entry) => [entry.typeId, entry.percent]));
     syncLayerUniforms(layerUniforms, ctrl, percentages);
+    syncLoadingUniforms(loadingParams, ctrl);
     baseColorU.value.set(ctrl.baseColor);
     sharpnessU.value = ctrl.colorSharpness;
     vibranceU.value = ctrl.vibrance;
@@ -98,9 +158,12 @@ function GradientPlane({ entries, ctrl, layerUniforms }) {
     noiseScaleU.value = ctrl.noiseScale;
     noiseSpeedU.value = ctrl.noiseSpeed;
   }, [
+    loading,
     entries,
     ctrl,
     layerUniforms,
+    loadingU,
+    loadingParams,
     baseColorU,
     sharpnessU,
     vibranceU,
@@ -152,11 +215,14 @@ function GradientPlane({ entries, ctrl, layerUniforms }) {
 
     const blended = weighted.div(max(weightSum, 1e-4));
     // Softly fall back to base only where almost no type influence
-    let c = mix(color(baseColorU), blended, clamp(weightSum, 0, 1));
+    let outputC = mix(color(baseColorU), blended, clamp(weightSum, 0, 1));
 
     // Push saturation so overlapping soft radii stay closer to reference art
-    const luma = c.r.mul(0.2126).add(c.g.mul(0.7152)).add(c.b.mul(0.0722));
-    c = mix(vec3(luma, luma, luma), c, vibranceU);
+    const luma = outputC.r.mul(0.2126).add(outputC.g.mul(0.7152)).add(outputC.b.mul(0.0722));
+    outputC = mix(vec3(luma, luma, luma), outputC, vibranceU);
+
+    const loadingC = loadingMetallicFill(p, loadingParams);
+    const c = mix(outputC, loadingC, loadingU);
 
     // Stencil alpha: opaque black outside, 0 inside the blob hole
     const holeMask = texture(maskTex).a.oneMinus();
@@ -168,6 +234,8 @@ function GradientPlane({ entries, ctrl, layerUniforms }) {
   }, [
     maskTex,
     layerUniforms,
+    loadingU,
+    loadingParams,
     baseColorU,
     sharpnessU,
     vibranceU,
@@ -239,11 +307,11 @@ function LayerDebugOverlay({ ctrl }) {
 }
 
 /**
- * WebGPU gradient fill for the a-We blob.
+ * WebGPU gradient fill for the a-We blob (loading silver + output type blend).
  * Covers the whole design canvas; Background_2@.png alpha masks it
  * to the blob hole, so the shader itself never needs the outline.
  */
-export default function BlobShaderFill({ entries }) {
+export default function BlobShaderFill({ entries, loading = false }) {
   const ctrl = useBlobShaderCtrl();
   const layerUniforms = useMemo(() => createLayerUniforms(), []);
 
@@ -266,15 +334,18 @@ export default function BlobShaderFill({ entries }) {
         <Suspense fallback={null}>
           <GradientPlane
             entries={entries}
+            loading={loading}
             ctrl={ctrl}
             layerUniforms={layerUniforms}
           />
         </Suspense>
       </Canvas>
 
-      <div className="ua-blob-debug-host">
-        <LayerDebugOverlay ctrl={ctrl} />
-      </div>
+      {!loading && (
+        <div className="ua-blob-debug-host">
+          <LayerDebugOverlay ctrl={ctrl} />
+        </div>
+      )}
     </div>
   );
 }
