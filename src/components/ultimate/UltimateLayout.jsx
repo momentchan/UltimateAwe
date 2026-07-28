@@ -14,12 +14,12 @@ function rankLabel(index) {
   return String(index + 1);
 }
 
-function DistributionBar({ entries, loading }) {
+function DistributionBar({ entries, showPlaceholders }) {
   return (
     <div className="ua-dist">
       <img className="ua-dist__frame" src={ASSETS.distributionBar} alt="" draggable={false} />
-      <div className={`ua-dist__fill ${loading ? "ua-dist__fill--loading" : ""}`}>
-        {!loading &&
+      <div className={`ua-dist__fill ${showPlaceholders ? "ua-dist__fill--loading" : ""}`}>
+        {!showPlaceholders &&
           entries.map((e) => (
             <div
               key={e.typeId}
@@ -35,12 +35,12 @@ function DistributionBar({ entries, loading }) {
   );
 }
 
-function RankingList({ entries, loading }) {
+function RankingList({ entries, showPlaceholders }) {
   return (
     <ul className="ua-rank">
       {entries.map((e, i) => {
         const t = TYPES[e.typeId];
-        const placeholder = loading || e.placeholder;
+        const placeholder = showPlaceholders || e.placeholder;
         const crowned = i < 2;
         return (
           <li key={`${e.typeId}-${i}`} className="ua-rank__row">
@@ -78,16 +78,27 @@ function RankingList({ entries, loading }) {
   );
 }
 
-function Hero({ leadingTypeId, level, loading }) {
-  const face = loading
-    ? ASSETS.faces.loading
-    : faceAsset(leadingTypeId, level);
+/**
+ * Hard-switch face by kind — no opacity crossfade (only blob color blends).
+ * NormalFace / LoadingFace share the same full-sheet placement.
+ * @param {'type' | 'idle' | 'loading'} faceKind
+ */
+function Hero({ leadingTypeId, level, faceKind }) {
+  let src = faceAsset(leadingTypeId, level);
+  let full = false;
+  if (faceKind === "idle") {
+    src = ASSETS.faces.normal;
+    full = true;
+  } else if (faceKind === "loading") {
+    src = ASSETS.faces.loading;
+    full = true;
+  }
 
   return (
     <div className="ua-hero">
       <img
-        className={`ua-hero__face ${loading ? "ua-hero__face--full" : ""}`}
-        src={face}
+        className={`ua-hero__face ${full ? "ua-hero__face--full" : ""}`}
+        src={src}
         alt=""
         draggable={false}
       />
@@ -96,28 +107,50 @@ function Hero({ leadingTypeId, level, loading }) {
   );
 }
 
-export default function UltimateLayout({ data }) {
-  const loading = data.mode === "loading";
+/**
+ * @param {{
+ *   data: object,
+ *   loadingBlend?: number,
+ *   faceKind?: 'type' | 'idle' | 'loading',
+ *   showPlaceholders?: boolean,
+ * }} props
+ */
+export default function UltimateLayout({
+  data,
+  loadingBlend = 0,
+  faceKind = "type",
+  showPlaceholders = false,
+}) {
   const leading = data.entries[0]?.typeId ?? "absorb";
+  const empty = (data.total ?? 0) === 0;
+  const resolvedFace =
+    faceKind === "type" && empty ? "loading" : faceKind;
+  const placeholders = showPlaceholders || empty;
 
   return (
-    <div className={`ua-layout ${loading ? "ua-layout--loading" : ""}`}>
-      {/* Blob color layer sits under the stencil; shows through its hole */}
-      <BlobShaderFill loading={loading} entries={data.distributionEntries} />
+    <div className={`ua-layout ${placeholders ? "ua-layout--loading" : ""}`}>
+      <BlobShaderFill
+        loadingBlend={empty && faceKind === "type" ? 1 : loadingBlend}
+        entries={data.distributionEntries}
+      />
       <img className="ua-bg" src={ASSETS.background} alt="" draggable={false} />
 
       <header className="ua-header">
         <img className="ua-title" src={ASSETS.title} alt="a Wemoji!" draggable={false} />
       </header>
 
-      <Hero leadingTypeId={leading} level={data.level ?? 1} loading={loading} />
+      <Hero
+        leadingTypeId={leading}
+        level={data.level ?? 1}
+        faceKind={resolvedFace}
+      />
 
       <div className="ua-bottom">
         <DistributionBar
           entries={data.distributionEntries}
-          loading={loading}
+          showPlaceholders={placeholders}
         />
-        <RankingList entries={data.entries} loading={loading} />
+        <RankingList entries={data.entries} showPlaceholders={placeholders} />
       </div>
     </div>
   );

@@ -154,7 +154,7 @@ const BLOB_SHADER_SCHEMA = (() => {
       step: 0.01,
       label: "Noise speed",
     },
-    showLayerDebug: { value: true, label: "Show layer positions" },
+    showLayerDebug: { value: false, label: "Show layer positions" },
     "Loading fill": folder(
       {
         loadingBase: { value: "#b4b2b0", label: "Base" },
@@ -238,7 +238,7 @@ const BLOB_SHADER_SCHEMA = (() => {
           label: "Lo strength",
         },
       },
-      { collapsed: false },
+      { collapsed: true },
     ),
   };
   TYPE_ORDER.forEach((typeId) => {

@@ -157,8 +157,8 @@
   mix-blend-mode: screen;
 }
 
-/* LoadingFace_2@: white+alpha. Features sit low in the sheet; position
-   matched to Align Loading.png face (IoU sweep ≈ left 1087 / top 1509). */
+/* LoadingFace / NormalFace: same full sheet placement (features sit lower
+   in canvas than expression sprites). Matched to Align Loading.png face. */
 .ua-hero__face--full {
   width: 1612px;
   top: 1509px;
@@ -362,38 +362,13 @@
   left: 794px;
 }
 
-/* Dev toggles — not part of exhibition UI */
-.ua-dev {
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  z-index: 100;
-  display: flex;
-  gap: 8px;
-}
-
-.ua-dev button {
-  appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  font-size: 12px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.ua-dev button.is-active {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: #fff;
-}
-
-.ua-debug-counter {
+/* Unified debug panel — not part of exhibition UI */
+.ua-debug {
   position: fixed;
   top: 12px;
   left: 12px;
   z-index: 100;
-  width: 270px;
+  width: 280px;
   padding: 10px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 8px;
@@ -402,23 +377,69 @@
   font: 12px/1.3 system-ui, sans-serif;
 }
 
-.ua-debug-counter__header,
-.ua-debug-counter__footer {
+.ua-debug__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 10px;
 }
 
-.ua-debug-counter__header {
-  margin-bottom: 8px;
+.ua-debug__section {
+  margin-bottom: 10px;
 }
 
-.ua-debug-counter__types {
+.ua-debug__section--input {
+  margin-bottom: 0;
+}
+
+.ua-debug__label {
+  margin-bottom: 5px;
+  opacity: 0.65;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ua-debug__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.ua-debug__row button,
+.ua-debug__summary button {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font: inherit;
+  padding: 5px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.ua-debug__row button.is-active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+}
+
+.ua-debug__row button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ua-debug__phase {
+  margin-top: 5px;
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+.ua-debug__types {
   display: grid;
   gap: 4px;
 }
 
-.ua-debug-counter__types button {
+.ua-debug__types button {
   display: grid;
   grid-template-columns: 10px 22px 1fr 38px 34px;
   align-items: center;
@@ -433,17 +454,17 @@
   cursor: pointer;
 }
 
-.ua-debug-counter__types button:hover {
+.ua-debug__types button:hover {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.ua-debug-counter__swatch {
+.ua-debug__swatch {
   width: 10px;
   height: 10px;
   border-radius: 50%;
 }
 
-.ua-debug-counter kbd {
+.ua-debug kbd {
   display: inline-grid;
   place-items: center;
   min-width: 20px;
@@ -453,24 +474,33 @@
   font: inherit;
 }
 
-.ua-debug-counter__types b,
-.ua-debug-counter__types small {
+.ua-debug__types b,
+.ua-debug__types small {
   text-align: right;
 }
 
-.ua-debug-counter__types small {
+.ua-debug__types small {
   opacity: 0.7;
 }
 
-.ua-debug-counter__footer {
+.ua-debug__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.ua-debug-counter__footer button {
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 4px;
-  padding: 3px 8px;
-  background: transparent;
-  color: #fff;
-  cursor: pointer;
+.ua-debug__summary span {
+  opacity: 0.85;
+}
+
+.ua-debug__summary b {
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+.ua-debug__summary button {
+  margin-left: auto;
 }

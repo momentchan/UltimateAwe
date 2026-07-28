@@ -131,7 +131,7 @@ function loadingMetallicFill(p, u) {
     .div(max(weightSum, 1e-4));
 }
 
-function GradientPlane({ entries, loading, ctrl, layerUniforms }) {
+function GradientPlane({ entries, loadingBlend, ctrl, layerUniforms }) {
   const maskTex = useLoader(TextureLoader, ASSETS.background);
   const size = useThree((s) => s.size);
   const loadingU = useMemo(() => uniform(0), []);
@@ -144,10 +144,11 @@ function GradientPlane({ entries, loading, ctrl, layerUniforms }) {
   const noiseSpeedU = useMemo(() => uniform(0.18), []);
 
   useLayoutEffect(() => {
-    loadingU.value = loading ? 1 : 0;
-    const percentages = loading
-      ? Object.fromEntries(TYPE_ORDER.map((id) => [id, 0]))
-      : Object.fromEntries(entries.map((entry) => [entry.typeId, entry.percent]));
+    loadingU.value = loadingBlend;
+    // Keep type colors live under the blend so fade-to-gray desaturates real hues
+    const percentages = Object.fromEntries(
+      entries.map((entry) => [entry.typeId, entry.percent]),
+    );
     syncLayerUniforms(layerUniforms, ctrl, percentages);
     syncLoadingUniforms(loadingParams, ctrl);
     baseColorU.value.set(ctrl.baseColor);
@@ -158,7 +159,7 @@ function GradientPlane({ entries, loading, ctrl, layerUniforms }) {
     noiseScaleU.value = ctrl.noiseScale;
     noiseSpeedU.value = ctrl.noiseSpeed;
   }, [
-    loading,
+    loadingBlend,
     entries,
     ctrl,
     layerUniforms,
@@ -310,8 +311,10 @@ function LayerDebugOverlay({ ctrl }) {
  * WebGPU gradient fill for the a-We blob (loading silver + output type blend).
  * Covers the whole design canvas; Background_2@.png alpha masks it
  * to the blob hole, so the shader itself never needs the outline.
+ *
+ * @param {number} loadingBlend 0 = full type colors, 1 = loading silver
  */
-export default function BlobShaderFill({ entries, loading = false }) {
+export default function BlobShaderFill({ entries, loadingBlend = 0 }) {
   const ctrl = useBlobShaderCtrl();
   const layerUniforms = useMemo(() => createLayerUniforms(), []);
 
@@ -334,14 +337,14 @@ export default function BlobShaderFill({ entries, loading = false }) {
         <Suspense fallback={null}>
           <GradientPlane
             entries={entries}
-            loading={loading}
+            loadingBlend={loadingBlend}
             ctrl={ctrl}
             layerUniforms={layerUniforms}
           />
         </Suspense>
       </Canvas>
 
-      {!loading && (
+      {loadingBlend < 0.5 && (
         <div className="ua-blob-debug-host">
           <LayerDebugOverlay ctrl={ctrl} />
         </div>

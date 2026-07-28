@@ -18,27 +18,62 @@ function isTypingTarget(target) {
   );
 }
 
-export default function useUltimateDebugData() {
-  const [counts, setCounts] = useState(() => ({ ...EMPTY_COUNTS }));
+/**
+ * @param {{ autoPublish?: boolean }} options
+ * - Realtime (`autoPublish: true`): each increment updates published immediately.
+ * - Batch (`autoPublish: false`): increments only pending; call `publish()` on reveal.
+ */
+export default function useUltimateDebugData({ autoPublish = true } = {}) {
+  const [pendingCounts, setPendingCounts] = useState(() => ({ ...EMPTY_COUNTS }));
+  const [publishedCounts, setPublishedCounts] = useState(() => ({ ...EMPTY_COUNTS }));
   const previousRankRef = useRef(null);
+  const pendingRef = useRef(pendingCounts);
+  const autoPublishRef = useRef(autoPublish);
 
-  const data = useMemo(
-    () => createUltimateData(counts, previousRankRef.current),
-    [counts],
+  pendingRef.current = pendingCounts;
+  autoPublishRef.current = autoPublish;
+
+  const pendingData = useMemo(
+    () => createUltimateData(pendingCounts, null),
+    [pendingCounts],
   );
+
+  const publishedData = useMemo(
+    () => createUltimateData(publishedCounts, previousRankRef.current),
+    [publishedCounts],
+  );
+
+  const publish = useCallback(() => {
+    setPublishedCounts((prev) => {
+      previousRankRef.current = createUltimateData(prev).rank;
+      return { ...pendingRef.current };
+    });
+  }, []);
+
+  /** Copy published → pending (entering Batch with a clean buffer match). */
+  const alignPendingToPublished = useCallback(() => {
+    setPendingCounts({ ...publishedCounts });
+  }, [publishedCounts]);
 
   const increment = useCallback((typeId) => {
     if (!TYPE_ORDER.includes(typeId)) return;
 
-    setCounts((current) => {
-      previousRankRef.current = createUltimateData(current).rank;
-      return { ...current, [typeId]: current[typeId] + 1 };
+    setPendingCounts((current) => {
+      const next = { ...current, [typeId]: current[typeId] + 1 };
+      if (autoPublishRef.current) {
+        setPublishedCounts((pub) => {
+          previousRankRef.current = createUltimateData(pub).rank;
+          return next;
+        });
+      }
+      return next;
     });
   }, []);
 
   const reset = useCallback(() => {
     previousRankRef.current = null;
-    setCounts({ ...EMPTY_COUNTS });
+    setPendingCounts({ ...EMPTY_COUNTS });
+    setPublishedCounts({ ...EMPTY_COUNTS });
   }, []);
 
   useEffect(() => {
@@ -96,5 +131,14 @@ export default function useUltimateDebugData() {
     };
   }, [increment]);
 
-  return { data, increment, reset };
+  return {
+    pendingData,
+    publishedData,
+    /** @deprecated alias — debug panel / callers that want live buffer */
+    data: pendingData,
+    increment,
+    reset,
+    publish,
+    alignPendingToPublished,
+  };
 }

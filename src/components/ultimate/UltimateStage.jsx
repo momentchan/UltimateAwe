@@ -1,19 +1,64 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import UltimateLayout from "./UltimateLayout";
-import DebugCounterPanel from "./DebugCounterPanel";
+import DebugPanel from "./DebugPanel";
 import useUltimateDebugData from "./useUltimateDebugData";
+import useReflectCycle, { REFLECT_PHASE } from "./useReflectCycle";
+import { useBatchCtrl } from "./batchControls";
+import { useDebugCtrl } from "./debugControls";
 import { DESIGN, ASSETS } from "./assets";
 import "./ultimate.css";
+
+/** Top-level display modes: immediate updates vs buffered + reflect cycle. */
+const DISPLAY_MODE = {
+  realtime: "realtime",
+  batch: "batch",
+};
 
 /**
  * Letterbox a fixed 2160x3840 design canvas into the viewport.
  * Wrapper uses scaled footprint so transform does not push content off-screen.
  */
 export default function UltimateStage() {
-  const [mode, setMode] = useState("loading");
-  const [showGuide, setShowGuide] = useState(false);
+  const [displayMode, setDisplayMode] = useState(DISPLAY_MODE.realtime);
   const [scale, setScale] = useState(1);
-  const { data: computedData, increment, reset } = useUltimateDebugData();
+  const batchCtrl = useBatchCtrl();
+  const debugCtrl = useDebugCtrl();
+  const showGuide = Boolean(debugCtrl.showAlignGuide);
+
+  const autoPublish = displayMode === DISPLAY_MODE.realtime;
+  const {
+    pendingData,
+    publishedData,
+    increment,
+    reset,
+    publish,
+    alignPendingToPublished,
+  } = useUltimateDebugData({ autoPublish });
+
+  const onRevealStart = useCallback(() => {
+    publish();
+  }, [publish]);
+
+  const timings = useMemo(
+    () => ({
+      fadeMs: batchCtrl.fadeSec * 1000,
+      holdMs: batchCtrl.holdSec * 1000,
+      revealMs: batchCtrl.revealSec * 1000,
+    }),
+    [batchCtrl.fadeSec, batchCtrl.holdSec, batchCtrl.revealSec],
+  );
+
+  const {
+    phase,
+    loadingBlend,
+    startReflect,
+    cancel: cancelReflect,
+    isRunning,
+  } = useReflectCycle({
+    enabled: displayMode === DISPLAY_MODE.batch,
+    onRevealStart,
+    timings,
+  });
 
   useEffect(() => {
     const update = () => {
@@ -28,41 +73,80 @@ export default function UltimateStage() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const data = useMemo(
-    () => ({
-      ...computedData,
-      mode,
-      entries: computedData.entries.map((entry) => ({
-        ...entry,
-        placeholder: mode === "loading",
-      })),
-    }),
-    [computedData, mode],
-  );
+  const setRealtime = useCallback(() => {
+    cancelReflect();
+    publish();
+    setDisplayMode(DISPLAY_MODE.realtime);
+  }, [cancelReflect, publish]);
+
+  const setBatch = useCallback(() => {
+    cancelReflect();
+    alignPendingToPublished();
+    setDisplayMode(DISPLAY_MODE.batch);
+  }, [cancelReflect, alignPendingToPublished]);
+
+  const resetData = useCallback(() => {
+    cancelReflect();
+    reset();
+  }, [cancelReflect, reset]);
 
   const incrementType = useCallback(
     (typeId) => {
       increment(typeId);
-      setMode("output");
     },
     [increment],
   );
 
-  const resetData = useCallback(() => {
-    reset();
-    setMode("loading");
-  }, [reset]);
+  const { faceKind, showPlaceholders, layoutBlend } = useMemo(() => {
+    if (displayMode === DISPLAY_MODE.realtime) {
+      const empty = publishedData.total === 0;
+      return {
+        faceKind: empty ? "loading" : "type",
+        showPlaceholders: empty,
+        layoutBlend: empty ? 1 : 0,
+      };
+    }
 
-  useEffect(() => {
-    const showOutputAfterNumberKey = (event) => {
-      if (event.repeat) return;
-      if (/^[1-5]$/.test(event.key)) {
-        setMode("output");
-      }
+    if (phase === REFLECT_PHASE.fadeToGray) {
+      return {
+        faceKind: "idle",
+        showPlaceholders: true,
+        layoutBlend: loadingBlend,
+      };
+    }
+    if (phase === REFLECT_PHASE.loadingHold) {
+      return {
+        faceKind: "loading",
+        showPlaceholders: true,
+        layoutBlend: 1,
+      };
+    }
+    if (phase === REFLECT_PHASE.reveal) {
+      return {
+        faceKind: "type",
+        showPlaceholders: false,
+        layoutBlend: loadingBlend,
+      };
+    }
+
+    const empty = publishedData.total === 0;
+    return {
+      faceKind: empty ? "loading" : "type",
+      showPlaceholders: empty,
+      layoutBlend: empty ? 1 : 0,
     };
-    window.addEventListener("keydown", showOutputAfterNumberKey);
-    return () => window.removeEventListener("keydown", showOutputAfterNumberKey);
-  }, []);
+  }, [displayMode, phase, loadingBlend, publishedData.total]);
+
+  const layoutData = useMemo(
+    () => ({
+      ...publishedData,
+      entries: publishedData.entries.map((entry) => ({
+        ...entry,
+        placeholder: showPlaceholders,
+      })),
+    }),
+    [publishedData, showPlaceholders],
+  );
 
   return (
     <div className="ua-viewport">
@@ -81,12 +165,19 @@ export default function UltimateStage() {
             transform: `scale(${scale})`,
           }}
         >
-          <UltimateLayout data={data} />
+          <UltimateLayout
+            data={layoutData}
+            loadingBlend={layoutBlend}
+            faceKind={faceKind}
+            showPlaceholders={showPlaceholders}
+          />
 
           {showGuide && (
             <img
               className="ua-guide"
-              src={mode === "loading" ? ASSETS.align.loading : ASSETS.align.output}
+              src={
+                layoutBlend > 0.5 ? ASSETS.align.loading : ASSETS.align.output
+              }
               alt=""
               draggable={false}
             />
@@ -94,34 +185,16 @@ export default function UltimateStage() {
         </div>
       </div>
 
-      <div className="ua-dev">
-        <button
-          type="button"
-          className={mode === "output" ? "is-active" : ""}
-          onClick={() => setMode("output")}
-        >
-          Output
-        </button>
-        <button
-          type="button"
-          className={mode === "loading" ? "is-active" : ""}
-          onClick={() => setMode("loading")}
-        >
-          Loading
-        </button>
-        <button
-          type="button"
-          className={showGuide ? "is-active" : ""}
-          onClick={() => setShowGuide((v) => !v)}
-        >
-          Align guide
-        </button>
-      </div>
-
-      <DebugCounterPanel
-        data={computedData}
+      <DebugPanel
+        data={pendingData}
         onIncrement={incrementType}
         onReset={resetData}
+        displayMode={displayMode}
+        onRealtime={setRealtime}
+        onBatch={setBatch}
+        onReflect={() => startReflect()}
+        reflectDisabled={displayMode !== DISPLAY_MODE.batch || isRunning}
+        reflectPhase={phase}
       />
     </div>
   );
