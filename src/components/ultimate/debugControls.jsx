@@ -1,15 +1,13 @@
 import { createContext, useContext, useMemo } from "react";
 import { useControls } from "leva";
 
-const DEBUG_SCHEMA = {
-  showAlignGuide: { value: false, label: "Align guide" },
-};
-
 const DebugCtrlContext = createContext(null);
 
 /** Leva "Debug" folder for stage overlays / non-shader toggles. */
 export function DebugControlsProvider({ children }) {
-  const flat = useControls("Debug", DEBUG_SCHEMA);
+  const flat = useControls("Debug", {
+    showAlignGuide: { value: false, label: "Align guide" },
+  });
   const value = useMemo(() => flat, [flat]);
   return (
     <DebugCtrlContext.Provider value={value}>{children}</DebugCtrlContext.Provider>

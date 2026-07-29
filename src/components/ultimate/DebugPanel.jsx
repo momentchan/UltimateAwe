@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { TYPES } from "./assets";
 import { TYPE_ORDER } from "./ultimateData";
 
 /**
  * Unified debug chrome: display mode and type counters.
+ * Collapses to a compact chip instead of fully hiding.
  */
 export default function DebugPanel({
   data,
@@ -15,10 +17,41 @@ export default function DebugPanel({
   reflectDisabled,
   reflectPhase,
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const modeLabel = displayMode === "batch" ? "Batch" : "Realtime";
+
+  if (collapsed) {
+    return (
+      <aside className="ua-debug ua-debug--collapsed">
+        <button
+          type="button"
+          className="ua-debug__chip"
+          onClick={() => setCollapsed(false)}
+          title="Expand debug panel"
+        >
+          <strong>Debug</strong>
+          <span className="ua-debug__chip-mode">{modeLabel}</span>
+          <span className="ua-debug__chip-total">{data.total}</span>
+          <span className="ua-debug__chip-action" aria-hidden>
+            ▾
+          </span>
+        </button>
+      </aside>
+    );
+  }
+
   return (
     <aside className="ua-debug">
       <div className="ua-debug__header">
         <strong>Debug</strong>
+        <button
+          type="button"
+          className="ua-debug__collapse"
+          onClick={() => setCollapsed(true)}
+          title="Collapse debug panel"
+        >
+          Hide
+        </button>
       </div>
 
       <div className="ua-debug__section">
