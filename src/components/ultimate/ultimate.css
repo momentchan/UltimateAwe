@@ -242,15 +242,17 @@
   transform: translateX(-50%);
   /* Data Bar 3654x345 (2x) => 1827x172 at 1x; rows every ~197px */
   width: 1827px;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
 }
 
+/* Rows are slot-positioned so a rank change animates as travel, not a re-flow */
 .ua-rank__row {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
   height: 172px;
-  flex-shrink: 0;
+  transition: transform var(--ua-rank-move, 600ms) cubic-bezier(0.22, 0.9, 0.24, 1);
+  will-change: transform;
 }
 
 .ua-rank__frame {
@@ -360,6 +362,12 @@
 
 .ua-layout--loading .ua-rank__zh {
   left: 794px;
+}
+
+/* Reflect transition: symbols in the pct column, type columns unchanged */
+.ua-layout--scramble .ua-rank__pct {
+  font-size: 96px;
+  letter-spacing: 0.02em;
 }
 
 /* Unified debug panel — not part of exhibition UI */

@@ -102,34 +102,35 @@ export default function UltimateStage() {
     onAdd: incrementType,
   });
 
-  const { faceKind, showPlaceholders, layoutBlend } = useMemo(() => {
+  const { faceKind, placeholderMode, layoutBlend } = useMemo(() => {
     if (displayMode === DISPLAY_MODE.realtime) {
       const empty = publishedData.total === 0;
       return {
         faceKind: empty ? "loading" : "type",
-        showPlaceholders: empty,
+        placeholderMode: empty ? "full" : "none",
         layoutBlend: empty ? 1 : 0,
       };
     }
 
+    // Reflect transition keeps the ranked types readable; only % scrambles
     if (phase === REFLECT_PHASE.fadeToGray) {
       return {
         faceKind: "idle",
-        showPlaceholders: true,
+        placeholderMode: "percent",
         layoutBlend: loadingBlend,
       };
     }
     if (phase === REFLECT_PHASE.loadingHold) {
       return {
         faceKind: "loading",
-        showPlaceholders: true,
+        placeholderMode: "percent",
         layoutBlend: 1,
       };
     }
     if (phase === REFLECT_PHASE.reveal) {
       return {
         faceKind: "type",
-        showPlaceholders: false,
+        placeholderMode: "none",
         layoutBlend: loadingBlend,
       };
     }
@@ -137,21 +138,10 @@ export default function UltimateStage() {
     const empty = publishedData.total === 0;
     return {
       faceKind: empty ? "loading" : "type",
-      showPlaceholders: empty,
+      placeholderMode: empty ? "full" : "none",
       layoutBlend: empty ? 1 : 0,
     };
   }, [displayMode, phase, loadingBlend, publishedData.total]);
-
-  const layoutData = useMemo(
-    () => ({
-      ...publishedData,
-      entries: publishedData.entries.map((entry) => ({
-        ...entry,
-        placeholder: showPlaceholders,
-      })),
-    }),
-    [publishedData, showPlaceholders],
-  );
 
   return (
     <div className="ua-viewport">
@@ -171,10 +161,12 @@ export default function UltimateStage() {
           }}
         >
           <UltimateLayout
-            data={layoutData}
+            data={publishedData}
             loadingBlend={layoutBlend}
             faceKind={faceKind}
-            showPlaceholders={showPlaceholders}
+            placeholderMode={placeholderMode}
+            rankShuffleMs={batchCtrl.shuffleSec * 1000}
+            rankMoveMs={batchCtrl.rankMoveSec * 1000}
           />
 
           {showGuide && (

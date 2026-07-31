@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { ASSETS, TYPES, faceAsset } from "./assets";
 import BlobShaderFill from "./BlobShaderFill";
+import ScrambleText from "./ScrambleText";
 import "./ultimate.css";
 
 function trendIcon(trend) {
@@ -14,12 +16,51 @@ function rankLabel(index) {
   return String(index + 1);
 }
 
-function DistributionBar({ entries, showPlaceholders }) {
+/** Row 172px tall + 25px gap on the align map. */
+const ROW_GAP = 25;
+const ROW_PITCH = 172 + ROW_GAP;
+
+/** Fisher–Yates, retried so the rows visibly move every roll. */
+function rollSlots(count, previous) {
+  const next = Array.from({ length: count }, (_, i) => i);
+  for (let attempt = 0; attempt < 8; attempt++) {
+    for (let i = count - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    const moved = next.some((slot, i) => slot !== (previous ? previous[i] : i));
+    if (moved) break;
+  }
+  return next;
+}
+
+/**
+ * Reshuffle rank slots while the reflect transition is garbled; returns null
+ * once it stops, which drops every row back onto its true rank.
+ */
+function useShuffledSlots(count, active, intervalMs) {
+  const [slots, setSlots] = useState(null);
+
+  useEffect(() => {
+    if (!active) {
+      setSlots(null);
+      return undefined;
+    }
+    const roll = () => setSlots((prev) => rollSlots(count, prev));
+    roll();
+    const id = setInterval(roll, Math.max(80, intervalMs));
+    return () => clearInterval(id);
+  }, [active, count, intervalMs]);
+
+  return slots;
+}
+
+function DistributionBar({ entries, muted }) {
   return (
     <div className="ua-dist">
       <img className="ua-dist__frame" src={ASSETS.distributionBar} alt="" draggable={false} />
-      <div className={`ua-dist__fill ${showPlaceholders ? "ua-dist__fill--loading" : ""}`}>
-        {!showPlaceholders &&
+      <div className={`ua-dist__fill ${muted ? "ua-dist__fill--loading" : ""}`}>
+        {!muted &&
           entries.map((e) => (
             <div
               key={e.typeId}
@@ -35,25 +76,49 @@ function DistributionBar({ entries, showPlaceholders }) {
   );
 }
 
-function RankingList({ entries, showPlaceholders }) {
+function RankingList({ entries, placeholderMode, shuffleMs, moveMs }) {
+  const slots = useShuffledSlots(
+    entries.length,
+    placeholderMode === "percent",
+    shuffleMs,
+  );
+
   return (
-    <ul className="ua-rank">
+    <ul
+      className="ua-rank"
+      style={{
+        height: entries.length * ROW_PITCH - ROW_GAP,
+        "--ua-rank-move": `${moveMs}ms`,
+      }}
+    >
       {entries.map((e, i) => {
         const t = TYPES[e.typeId];
-        const placeholder = showPlaceholders || e.placeholder;
-        const crowned = i < 2;
+        const full = placeholderMode === "full" || e.placeholder;
+        const scrambled = full || placeholderMode === "percent";
+        // Place/crown belong to the physical slot, so the podium stays put
+        const slot = slots ? slots[i] : i;
+        const crowned = slot < 2;
         return (
-          <li key={`${e.typeId}-${i}`} className="ua-rank__row">
+          <li
+            key={e.typeId}
+            className="ua-rank__row"
+            style={{
+              transform: `translateY(${slot * ROW_PITCH}px)`,
+              zIndex: entries.length - slot,
+            }}
+          >
             <img className="ua-rank__frame" src={ASSETS.dataBar} alt="" draggable={false} />
             <div className="ua-rank__content">
               <div className={`ua-rank__slot ${crowned ? "ua-rank__slot--crowned" : ""}`}>
                 {crowned && (
                   <img className="ua-rank__crown" src={ASSETS.crown} alt="" draggable={false} />
                 )}
-                <span className="ua-rank__place">{rankLabel(i)}</span>
+                <span className="ua-rank__place">{rankLabel(slot)}</span>
               </div>
               <span className="ua-rank__pct">
-                {placeholder ? (
+                {placeholderMode === "percent" ? (
+                  <ScrambleText length={4} intervalMs={65} staggerMs={i * 18} />
+                ) : scrambled ? (
                   "!@#%"
                 ) : (
                   <>
@@ -62,8 +127,8 @@ function RankingList({ entries, showPlaceholders }) {
                   </>
                 )}
               </span>
-              <span className="ua-rank__zh">{placeholder ? "??型" : t.zh}</span>
-              <span className="ua-rank__en">{placeholder ? "" : t.en}</span>
+              <span className="ua-rank__zh">{full ? "??型" : t.zh}</span>
+              <span className="ua-rank__en">{full ? "" : t.en}</span>
               <img
                 className={`ua-rank__trend ua-rank__trend--${e.trend}`}
                 src={trendIcon(e.trend)}
@@ -112,23 +177,37 @@ function Hero({ leadingTypeId, level, faceKind }) {
  *   data: object,
  *   loadingBlend?: number,
  *   faceKind?: 'type' | 'idle' | 'loading',
- *   showPlaceholders?: boolean,
+ *   placeholderMode?: 'none' | 'percent' | 'full',
+ *   rankShuffleMs?: number,
+ *   rankMoveMs?: number,
  * }} props
+ * - `percent`: reflect transition — scramble percentages, keep real type names.
+ * - `full`: nothing measured yet — scramble percentages and type names.
  */
 export default function UltimateLayout({
   data,
   loadingBlend = 0,
   faceKind = "type",
-  showPlaceholders = false,
+  placeholderMode = "none",
+  rankShuffleMs = 450,
+  rankMoveMs = 600,
 }) {
   const leading = data.entries[0]?.typeId ?? "absorb";
   const empty = (data.total ?? 0) === 0;
   const resolvedFace =
     faceKind === "type" && empty ? "loading" : faceKind;
-  const placeholders = showPlaceholders || empty;
+  const mode = empty ? "full" : placeholderMode;
 
   return (
-    <div className={`ua-layout ${placeholders ? "ua-layout--loading" : ""}`}>
+    <div
+      className={`ua-layout ${
+        mode === "full"
+          ? "ua-layout--loading"
+          : mode === "percent"
+            ? "ua-layout--scramble"
+            : ""
+      }`}
+    >
       <BlobShaderFill
         loadingBlend={empty && faceKind === "type" ? 1 : loadingBlend}
         entries={data.distributionEntries}
@@ -148,9 +227,14 @@ export default function UltimateLayout({
       <div className="ua-bottom">
         <DistributionBar
           entries={data.distributionEntries}
-          showPlaceholders={placeholders}
+          muted={mode !== "none"}
         />
-        <RankingList entries={data.entries} showPlaceholders={placeholders} />
+        <RankingList
+          entries={data.entries}
+          placeholderMode={mode}
+          shuffleMs={rankShuffleMs}
+          moveMs={rankMoveMs}
+        />
       </div>
     </div>
   );

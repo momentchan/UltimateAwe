@@ -6,6 +6,10 @@ export const BATCH_DEFAULTS = {
   fadeSec: 1.5,
   holdSec: 1.5,
   revealSec: 1.5,
+  /** How often rank rows swap slots during the silver transition. */
+  shuffleSec: 0.45,
+  /** Travel time for a row moving between rank slots. */
+  rankMoveSec: 0.6,
   /** Reserved for auto reflect; not wired yet. */
   intervalSec: 3 * 60,
 };
@@ -31,6 +35,20 @@ const BATCH_SCHEMA = {
     max: 10,
     step: 0.1,
     label: "Reveal (s)",
+  },
+  shuffleSec: {
+    value: BATCH_DEFAULTS.shuffleSec,
+    min: 0.1,
+    max: 2,
+    step: 0.05,
+    label: "Rank shuffle every (s)",
+  },
+  rankMoveSec: {
+    value: BATCH_DEFAULTS.rankMoveSec,
+    min: 0.1,
+    max: 2,
+    step: 0.05,
+    label: "Rank move (s)",
   },
 };
 
