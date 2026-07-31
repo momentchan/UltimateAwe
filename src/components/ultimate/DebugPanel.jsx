@@ -3,16 +3,13 @@ import { TYPES } from "./assets";
 import { TYPE_ORDER } from "./ultimateData";
 
 /**
- * Unified debug chrome: display mode and type counters.
+ * Debug chrome: signal status, reflect triggers, and type counters.
  * Collapses to a compact chip instead of fully hiding.
  */
 export default function DebugPanel({
   data,
   onIncrement,
   onReset,
-  displayMode,
-  onRealtime,
-  onBatch,
   onReflect,
   reflectDisabled,
   reflectPhase,
@@ -20,7 +17,6 @@ export default function DebugPanel({
   signalUrl = "",
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const modeLabel = displayMode === "batch" ? "Batch" : "Realtime";
 
   if (collapsed) {
     return (
@@ -32,7 +28,6 @@ export default function DebugPanel({
           title="Expand debug panel"
         >
           <strong>Debug</strong>
-          <span className="ua-debug__chip-mode">{modeLabel}</span>
           <span
             className={`ua-debug__chip-signal ua-debug__chip-signal--${signalStatus}`}
             title={signalUrl}
@@ -75,38 +70,26 @@ export default function DebugPanel({
       </div>
 
       <div className="ua-debug__section">
-        <div className="ua-debug__label">Mode</div>
-        <div className="ua-debug__row">
-          <button
-            type="button"
-            className={displayMode === "realtime" ? "is-active" : ""}
-            onClick={onRealtime}
-          >
-            Realtime
-          </button>
-          <button
-            type="button"
-            className={displayMode === "batch" ? "is-active" : ""}
-            onClick={onBatch}
-          >
-            Batch
-          </button>
-        </div>
-      </div>
-
-      <div className="ua-debug__section">
-        <div className="ua-debug__label">Batch</div>
+        <div className="ua-debug__label">Reflect</div>
         <div className="ua-debug__row">
           <button
             type="button"
             disabled={reflectDisabled}
-            onClick={onReflect}
-            title="Trigger reflect cycle (Batch only)"
+            onClick={() => onReflect?.("during")}
+            title="Reflect — shuffle bars during silver transition"
           >
-            Reflect
+            During
+          </button>
+          <button
+            type="button"
+            disabled={reflectDisabled}
+            onClick={() => onReflect?.("reveal")}
+            title="Reflect — slide bars when real % appears"
+          >
+            Reveal
           </button>
         </div>
-        {displayMode === "batch" && reflectPhase && reflectPhase !== "collect" && (
+        {reflectPhase && reflectPhase !== "collect" && (
           <div className="ua-debug__phase">Phase: {reflectPhase}</div>
         )}
       </div>

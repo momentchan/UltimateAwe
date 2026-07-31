@@ -20,6 +20,12 @@ function rankLabel(index) {
 const ROW_GAP = 25;
 const ROW_PITCH = 172 + ROW_GAP;
 
+/** A: bars reshuffle during silver · B: bars only slide on reveal */
+export const RANK_MOVE_MODE = {
+  during: "during",
+  reveal: "reveal",
+};
+
 /** Fisher–Yates, retried so the rows visibly move every roll. */
 function rollSlots(count, previous) {
   const next = Array.from({ length: count }, (_, i) => i);
@@ -34,25 +40,38 @@ function rollSlots(count, previous) {
   return next;
 }
 
+const TREND_POOL = ["up", "down", "even"];
+
+function rollTrends(count) {
+  return Array.from(
+    { length: count },
+    () => TREND_POOL[Math.floor(Math.random() * TREND_POOL.length)],
+  );
+}
+
 /**
- * Reshuffle rank slots while the reflect transition is garbled; returns null
- * once it stops, which drops every row back onto its true rank.
+ * While % is garbled: always flicker trends; optionally reshuffle bar slots (mode A).
+ * Clears on reveal so bars settle onto the published order.
  */
-function useShuffledSlots(count, active, intervalMs) {
-  const [slots, setSlots] = useState(null);
+function useReflectShuffle(count, active, intervalMs, moveSlots) {
+  const [state, setState] = useState(null);
 
   useEffect(() => {
     if (!active) {
-      setSlots(null);
+      setState(null);
       return undefined;
     }
-    const roll = () => setSlots((prev) => rollSlots(count, prev));
+    const roll = () =>
+      setState((prev) => ({
+        slots: moveSlots ? rollSlots(count, prev?.slots) : null,
+        trends: rollTrends(count),
+      }));
     roll();
     const id = setInterval(roll, Math.max(80, intervalMs));
     return () => clearInterval(id);
-  }, [active, count, intervalMs]);
+  }, [active, count, intervalMs, moveSlots]);
 
-  return slots;
+  return state;
 }
 
 function DistributionBar({ entries, muted }) {
@@ -76,11 +95,13 @@ function DistributionBar({ entries, muted }) {
   );
 }
 
-function RankingList({ entries, placeholderMode, shuffleMs, moveMs }) {
-  const slots = useShuffledSlots(
+function RankingList({ entries, placeholderMode, shuffleMs, moveMs, rankMoveMode }) {
+  const moveSlots = rankMoveMode === RANK_MOVE_MODE.during;
+  const shuffle = useReflectShuffle(
     entries.length,
     placeholderMode === "percent",
     shuffleMs,
+    moveSlots,
   );
 
   return (
@@ -95,9 +116,11 @@ function RankingList({ entries, placeholderMode, shuffleMs, moveMs }) {
         const t = TYPES[e.typeId];
         const full = placeholderMode === "full" || e.placeholder;
         const scrambled = full || placeholderMode === "percent";
-        // Place/crown belong to the physical slot, so the podium stays put
-        const slot = slots ? slots[i] : i;
+        // Mode A: physical slot while shuffling (podium stays put).
+        // Mode B / idle: entry index — publish() reorders and bars slide on reveal.
+        const slot = shuffle?.slots ? shuffle.slots[i] : i;
         const crowned = slot < 2;
+        const trend = shuffle?.trends ? shuffle.trends[i] : e.trend;
         return (
           <li
             key={e.typeId}
@@ -130,8 +153,8 @@ function RankingList({ entries, placeholderMode, shuffleMs, moveMs }) {
               <span className="ua-rank__zh">{full ? "??型" : t.zh}</span>
               <span className="ua-rank__en">{full ? "" : t.en}</span>
               <img
-                className={`ua-rank__trend ua-rank__trend--${e.trend}`}
-                src={trendIcon(e.trend)}
+                className={`ua-rank__trend ua-rank__trend--${trend}`}
+                src={trendIcon(trend)}
                 alt=""
                 draggable={false}
               />
@@ -180,6 +203,7 @@ function Hero({ leadingTypeId, level, faceKind }) {
  *   placeholderMode?: 'none' | 'percent' | 'full',
  *   rankShuffleMs?: number,
  *   rankMoveMs?: number,
+ *   rankMoveMode?: 'during' | 'reveal',
  * }} props
  * - `percent`: reflect transition — scramble percentages, keep real type names.
  * - `full`: nothing measured yet — scramble percentages and type names.
@@ -190,7 +214,8 @@ export default function UltimateLayout({
   faceKind = "type",
   placeholderMode = "none",
   rankShuffleMs = 450,
-  rankMoveMs = 600,
+  rankMoveMs = 1000,
+  rankMoveMode = RANK_MOVE_MODE.reveal,
 }) {
   const leading = data.entries[0]?.typeId ?? "absorb";
   const empty = (data.total ?? 0) === 0;
@@ -234,6 +259,7 @@ export default function UltimateLayout({
           placeholderMode={mode}
           shuffleMs={rankShuffleMs}
           moveMs={rankMoveMs}
+          rankMoveMode={rankMoveMode}
         />
       </div>
     </div>

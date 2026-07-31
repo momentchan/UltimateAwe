@@ -16,7 +16,7 @@ function DisplayApp() {
       <BatchControlsProvider>
         <DebugControlsProvider>
           {isDebug ? <LevaWrapper dock="top-right" /> : <Leva hidden />}
-          <UltimateStage />
+          <UltimateStage showDebug={isDebug} />
         </DebugControlsProvider>
       </BatchControlsProvider>
     </BlobShaderControlsProvider>

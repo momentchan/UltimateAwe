@@ -6,10 +6,10 @@ export const BATCH_DEFAULTS = {
   fadeSec: 1.5,
   holdSec: 1.5,
   revealSec: 1.5,
-  /** How often rank rows swap slots during the silver transition. */
+  /** Interval for trend flicker (both) and bar reshuffle (mode A). */
   shuffleSec: 0.45,
-  /** Travel time for a row moving between rank slots. */
-  rankMoveSec: 0.6,
+  /** Travel time when a bar slides between rank slots. */
+  rankMoveSec: 1.0,
   /** Reserved for auto reflect; not wired yet. */
   intervalSec: 3 * 60,
 };
@@ -41,7 +41,7 @@ const BATCH_SCHEMA = {
     min: 0.1,
     max: 2,
     step: 0.05,
-    label: "Rank shuffle every (s)",
+    label: "Shuffle / flicker every (s)",
   },
   rankMoveSec: {
     value: BATCH_DEFAULTS.rankMoveSec,

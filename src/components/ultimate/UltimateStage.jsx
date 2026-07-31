@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import UltimateLayout from "./UltimateLayout";
+import UltimateLayout, { RANK_MOVE_MODE } from "./UltimateLayout";
 import DebugPanel from "./DebugPanel";
 import useUltimateDebugData from "./useUltimateDebugData";
 import useReflectCycle, { REFLECT_PHASE } from "./useReflectCycle";
@@ -9,32 +9,20 @@ import useSignalIngress from "./useSignalIngress";
 import { DESIGN, ASSETS } from "./assets";
 import "./ultimate.css";
 
-/** Top-level display modes: immediate updates vs buffered + reflect cycle. */
-const DISPLAY_MODE = {
-  realtime: "realtime",
-  batch: "batch",
-};
-
 /**
  * Letterbox a fixed 2160x3840 design canvas into the viewport.
  * Wrapper uses scaled footprint so transform does not push content off-screen.
+ * Display is always batch: counts buffer until a reflect cycle publishes them.
  */
-export default function UltimateStage() {
-  const [displayMode, setDisplayMode] = useState(DISPLAY_MODE.realtime);
+export default function UltimateStage({ showDebug = false }) {
+  const [rankMoveMode, setRankMoveMode] = useState(RANK_MOVE_MODE.reveal);
   const [scale, setScale] = useState(1);
   const batchCtrl = useBatchCtrl();
   const debugCtrl = useDebugCtrl();
-  const showGuide = Boolean(debugCtrl.showAlignGuide);
+  const showGuide = Boolean(showDebug && debugCtrl.showAlignGuide);
 
-  const autoPublish = displayMode === DISPLAY_MODE.realtime;
-  const {
-    pendingData,
-    publishedData,
-    increment,
-    reset,
-    publish,
-    alignPendingToPublished,
-  } = useUltimateDebugData({ autoPublish });
+  const { pendingData, publishedData, increment, reset, publish } =
+    useUltimateDebugData();
 
   const onRevealStart = useCallback(() => {
     publish();
@@ -56,7 +44,7 @@ export default function UltimateStage() {
     cancel: cancelReflect,
     isRunning,
   } = useReflectCycle({
-    enabled: displayMode === DISPLAY_MODE.batch,
+    enabled: true,
     onRevealStart,
     timings,
   });
@@ -73,18 +61,6 @@ export default function UltimateStage() {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
-
-  const setRealtime = useCallback(() => {
-    cancelReflect();
-    publish();
-    setDisplayMode(DISPLAY_MODE.realtime);
-  }, [cancelReflect, publish]);
-
-  const setBatch = useCallback(() => {
-    cancelReflect();
-    alignPendingToPublished();
-    setDisplayMode(DISPLAY_MODE.batch);
-  }, [cancelReflect, alignPendingToPublished]);
 
   const resetData = useCallback(() => {
     cancelReflect();
@@ -103,16 +79,6 @@ export default function UltimateStage() {
   });
 
   const { faceKind, placeholderMode, layoutBlend } = useMemo(() => {
-    if (displayMode === DISPLAY_MODE.realtime) {
-      const empty = publishedData.total === 0;
-      return {
-        faceKind: empty ? "loading" : "type",
-        placeholderMode: empty ? "full" : "none",
-        layoutBlend: empty ? 1 : 0,
-      };
-    }
-
-    // Reflect transition keeps the ranked types readable; only % scrambles
     if (phase === REFLECT_PHASE.fadeToGray) {
       return {
         faceKind: "idle",
@@ -141,7 +107,7 @@ export default function UltimateStage() {
       placeholderMode: empty ? "full" : "none",
       layoutBlend: empty ? 1 : 0,
     };
-  }, [displayMode, phase, loadingBlend, publishedData.total]);
+  }, [phase, loadingBlend, publishedData.total]);
 
   return (
     <div className="ua-viewport">
@@ -167,6 +133,7 @@ export default function UltimateStage() {
             placeholderMode={placeholderMode}
             rankShuffleMs={batchCtrl.shuffleSec * 1000}
             rankMoveMs={batchCtrl.rankMoveSec * 1000}
+            rankMoveMode={rankMoveMode}
           />
 
           {showGuide && (
@@ -182,19 +149,21 @@ export default function UltimateStage() {
         </div>
       </div>
 
-      <DebugPanel
-        data={pendingData}
-        onIncrement={incrementType}
-        onReset={resetData}
-        displayMode={displayMode}
-        onRealtime={setRealtime}
-        onBatch={setBatch}
-        onReflect={() => startReflect()}
-        reflectDisabled={displayMode !== DISPLAY_MODE.batch || isRunning}
-        reflectPhase={phase}
-        signalStatus={signalStatus}
-        signalUrl={signalUrl}
-      />
+      {showDebug && (
+        <DebugPanel
+          data={pendingData}
+          onIncrement={incrementType}
+          onReset={resetData}
+          onReflect={(mode) => {
+            setRankMoveMode(mode);
+            startReflect();
+          }}
+          reflectDisabled={isRunning}
+          reflectPhase={phase}
+          signalStatus={signalStatus}
+          signalUrl={signalUrl}
+        />
+      )}
     </div>
   );
 }

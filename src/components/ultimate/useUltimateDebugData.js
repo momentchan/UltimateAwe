@@ -19,19 +19,16 @@ function isTypingTarget(target) {
 }
 
 /**
- * @param {{ autoPublish?: boolean }} options
- * - Realtime (`autoPublish: true`): each increment updates published immediately.
- * - Batch (`autoPublish: false`): increments only pending; call `publish()` on reveal.
+ * Batch buffer: increments only update pending counts.
+ * Call `publish()` on reflect reveal to push pending → published display.
  */
-export default function useUltimateDebugData({ autoPublish = true } = {}) {
+export default function useUltimateDebugData() {
   const [pendingCounts, setPendingCounts] = useState(() => ({ ...EMPTY_COUNTS }));
   const [publishedCounts, setPublishedCounts] = useState(() => ({ ...EMPTY_COUNTS }));
   const previousRankRef = useRef(null);
   const pendingRef = useRef(pendingCounts);
-  const autoPublishRef = useRef(autoPublish);
 
   pendingRef.current = pendingCounts;
-  autoPublishRef.current = autoPublish;
 
   const pendingData = useMemo(
     () => createUltimateData(pendingCounts, null),
@@ -50,26 +47,15 @@ export default function useUltimateDebugData({ autoPublish = true } = {}) {
     });
   }, []);
 
-  /** Copy published → pending (entering Batch with a clean buffer match). */
-  const alignPendingToPublished = useCallback(() => {
-    setPendingCounts({ ...publishedCounts });
-  }, [publishedCounts]);
-
   const increment = useCallback((typeId, n = 1) => {
     if (!TYPE_ORDER.includes(typeId)) return;
     const amount = Math.max(0, Math.floor(Number(n) || 0));
     if (amount <= 0) return;
 
-    setPendingCounts((current) => {
-      const next = { ...current, [typeId]: current[typeId] + amount };
-      if (autoPublishRef.current) {
-        setPublishedCounts((pub) => {
-          previousRankRef.current = createUltimateData(pub).rank;
-          return next;
-        });
-      }
-      return next;
-    });
+    setPendingCounts((current) => ({
+      ...current,
+      [typeId]: current[typeId] + amount,
+    }));
   }, []);
 
   const reset = useCallback(() => {
@@ -136,11 +122,8 @@ export default function useUltimateDebugData({ autoPublish = true } = {}) {
   return {
     pendingData,
     publishedData,
-    /** @deprecated alias — debug panel / callers that want live buffer */
-    data: pendingData,
     increment,
     reset,
     publish,
-    alignPendingToPublished,
   };
 }
