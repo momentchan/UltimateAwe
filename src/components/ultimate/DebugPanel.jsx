@@ -16,6 +16,8 @@ export default function DebugPanel({
   onReflect,
   reflectDisabled,
   reflectPhase,
+  signalStatus = "idle",
+  signalUrl = "",
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const modeLabel = displayMode === "batch" ? "Batch" : "Realtime";
@@ -31,6 +33,12 @@ export default function DebugPanel({
         >
           <strong>Debug</strong>
           <span className="ua-debug__chip-mode">{modeLabel}</span>
+          <span
+            className={`ua-debug__chip-signal ua-debug__chip-signal--${signalStatus}`}
+            title={signalUrl}
+          >
+            WS
+          </span>
           <span className="ua-debug__chip-total">{data.total}</span>
           <span className="ua-debug__chip-action" aria-hidden>
             ▾
@@ -52,6 +60,18 @@ export default function DebugPanel({
         >
           Hide
         </button>
+      </div>
+
+      <div className="ua-debug__section">
+        <div className="ua-debug__label">Signal relay</div>
+        <div className={`ua-debug__signal ua-debug__signal--${signalStatus}`}>
+          {signalStatus}
+        </div>
+        {signalUrl ? (
+          <div className="ua-debug__signal-url" title={signalUrl}>
+            {signalUrl}
+          </div>
+        ) : null}
       </div>
 
       <div className="ua-debug__section">

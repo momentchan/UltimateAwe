@@ -55,11 +55,13 @@ export default function useUltimateDebugData({ autoPublish = true } = {}) {
     setPendingCounts({ ...publishedCounts });
   }, [publishedCounts]);
 
-  const increment = useCallback((typeId) => {
+  const increment = useCallback((typeId, n = 1) => {
     if (!TYPE_ORDER.includes(typeId)) return;
+    const amount = Math.max(0, Math.floor(Number(n) || 0));
+    if (amount <= 0) return;
 
     setPendingCounts((current) => {
-      const next = { ...current, [typeId]: current[typeId] + 1 };
+      const next = { ...current, [typeId]: current[typeId] + amount };
       if (autoPublishRef.current) {
         setPublishedCounts((pub) => {
           previousRankRef.current = createUltimateData(pub).rank;

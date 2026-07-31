@@ -5,6 +5,7 @@ import useUltimateDebugData from "./useUltimateDebugData";
 import useReflectCycle, { REFLECT_PHASE } from "./useReflectCycle";
 import { useBatchCtrl } from "./batchControls";
 import { useDebugCtrl } from "./debugControls";
+import useSignalIngress from "./useSignalIngress";
 import { DESIGN, ASSETS } from "./assets";
 import "./ultimate.css";
 
@@ -91,11 +92,15 @@ export default function UltimateStage() {
   }, [cancelReflect, reset]);
 
   const incrementType = useCallback(
-    (typeId) => {
-      increment(typeId);
+    (typeId, n = 1) => {
+      increment(typeId, n);
     },
     [increment],
   );
+
+  const { status: signalStatus, url: signalUrl } = useSignalIngress({
+    onAdd: incrementType,
+  });
 
   const { faceKind, showPlaceholders, layoutBlend } = useMemo(() => {
     if (displayMode === DISPLAY_MODE.realtime) {
@@ -195,6 +200,8 @@ export default function UltimateStage() {
         onReflect={() => startReflect()}
         reflectDisabled={displayMode !== DISPLAY_MODE.batch || isRunning}
         reflectPhase={phase}
+        signalStatus={signalStatus}
+        signalUrl={signalUrl}
       />
     </div>
   );

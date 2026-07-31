@@ -14,6 +14,14 @@ export default {
   server: {
     host: true,
     https: true,
+    proxy: {
+      // Browser uses wss://localhost:5173/signal → local relay (avoids mixed content)
+      "/signal": {
+        target: "ws://127.0.0.1:8765",
+        ws: true,
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: "dist",

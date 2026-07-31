@@ -435,6 +435,51 @@
   font-size: 11px;
 }
 
+.ua-debug__chip-signal {
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  background: rgba(255, 143, 143, 0.2);
+  color: #ffb0b0;
+}
+
+.ua-debug__chip-signal--connected {
+  background: rgba(125, 255, 160, 0.18);
+  color: #9dffb8;
+}
+
+.ua-debug__chip-signal--connecting,
+.ua-debug__chip-signal--reconnecting {
+  background: rgba(255, 210, 125, 0.18);
+  color: #ffd27d;
+}
+
+.ua-debug__signal {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.ua-debug__signal--connected {
+  color: #7dffa0;
+}
+
+.ua-debug__signal--connecting,
+.ua-debug__signal--reconnecting {
+  color: #ffd27d;
+}
+
+.ua-debug__signal--disconnected,
+.ua-debug__signal--idle {
+  color: #ff8f8f;
+}
+
+.ua-debug__signal-url {
+  font-size: 10px;
+  opacity: 0.55;
+  word-break: break-all;
+}
+
 .ua-debug__chip-total {
   opacity: 0.75;
   font-variant-numeric: tabular-nums;
