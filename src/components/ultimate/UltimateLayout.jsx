@@ -11,9 +11,12 @@ function trendIcon(trend) {
 }
 
 function rankLabel(index) {
-  if (index === 0) return "1st";
-  if (index === 1) return "2nd";
   return String(index + 1);
+}
+
+/** Format count digits only (unit「人」is a separate fixed glyph). */
+function formatPeopleDigits(count) {
+  return Number(count || 0).toLocaleString("en-US");
 }
 
 /** Row 172px tall + 25px gap on the align map. */
@@ -136,7 +139,10 @@ function RankingList({ entries, placeholderMode, shuffleMs, moveMs, rankMoveMode
                 {crowned && (
                   <img className="ua-rank__crown" src={ASSETS.crown} alt="" draggable={false} />
                 )}
-                <span className="ua-rank__place">{rankLabel(slot)}</span>
+                <span className="ua-rank__place">
+                  {rankLabel(slot)}
+                  {slot === 0 && <span className="ua-rank__placesuf">st</span>}
+                </span>
               </div>
               <span className="ua-rank__pct">
                 {placeholderMode === "percent" ? (
@@ -152,6 +158,17 @@ function RankingList({ entries, placeholderMode, shuffleMs, moveMs, rankMoveMode
               </span>
               <span className="ua-rank__zh">{full ? "??型" : t.zh}</span>
               <span className="ua-rank__en">{full ? "" : t.en}</span>
+              {scrambled ? (
+                <>
+                  <span className="ua-rank__count-num">???</span>
+                  <span className="ua-rank__count-unit">人</span>
+                </>
+              ) : (
+                <>
+                  <span className="ua-rank__count-num">{formatPeopleDigits(e.count)}</span>
+                  <span className="ua-rank__count-unit">人</span>
+                </>
+              )}
               <img
                 className={`ua-rank__trend ua-rank__trend--${trend}`}
                 src={trendIcon(trend)}

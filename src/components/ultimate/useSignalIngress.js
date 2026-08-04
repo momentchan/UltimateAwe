@@ -82,11 +82,19 @@ export default function useSignalIngress({
       closed = true;
       if (retryTimer != null) window.clearTimeout(retryTimer);
       if (socket) {
-        socket.onopen = null;
         socket.onmessage = null;
         socket.onerror = null;
         socket.onclose = null;
-        socket.close();
+        // Avoid "closed before the connection is established" on StrictMode/HMR.
+        if (socket.readyState === WebSocket.CONNECTING) {
+          socket.onopen = () => {
+            socket.onopen = null;
+            socket.close();
+          };
+        } else {
+          socket.onopen = null;
+          if (socket.readyState === WebSocket.OPEN) socket.close();
+        }
       }
       setStatus("idle");
     };

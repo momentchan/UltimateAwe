@@ -1,5 +1,38 @@
 /* Ultimate a-We — fixed design canvas 2160 x 3840 */
 
+@font-face {
+  font-family: "Poppins";
+  src: url("/font/Poppins/Poppins-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/font/Poppins/Poppins-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/font/Poppins/Poppins-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Guide uses 源樣黑體 B; project supplies GenKiGothic2TW-B as the CJK bold face */
+@font-face {
+  font-family: "GenKiGothic";
+  src: url("/font/GenKiGothic2TW-B.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 .ua-viewport {
   position: fixed;
   inset: 0;
@@ -28,8 +61,8 @@
   position: absolute;
   inset: 0;
   color: #fff;
-  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui,
-    sans-serif;
+  font-family: "Poppins", "GenKiGothic", "Noto Sans TC", "Microsoft JhengHei",
+    system-ui, sans-serif;
   user-select: none;
 }
 
@@ -264,8 +297,8 @@
   pointer-events: none;
 }
 
-/* Column offsets measured on the align map (row-relative, row width 1827):
-   rank slot x 67-180, pct x 292+, zh x 645+, en x 896+, trend x 1669-1747 */
+/* Column offsets from guide PDF → design row (w 1827):
+   place ~121, pct 292, zh 602, en 852, count-num right@1566, 人@1574, trend 1669 */
 
 .ua-rank__content {
   position: absolute;
@@ -299,47 +332,85 @@
 
 .ua-rank__place {
   position: relative;
-  font-size: 52px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-family: "Poppins", sans-serif;
+  font-size: 57px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.ua-rank__placesuf {
+  font-size: 29.5px;
+  font-weight: 900;
+  margin-left: 0.02em;
 }
 
 /* Rank number sits dark on the white crown for top 2 */
 .ua-rank__slot--crowned .ua-rank__place {
   color: #111;
-  font-size: 44px;
   margin-top: 26px;
 }
 
 .ua-rank__pct {
   left: 292px;
-  /* Digits ~100px tall on align map (band h=102) */
-  font-size: 136px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  display: flex;
+  align-items: flex-start;
+  font-family: "Poppins", sans-serif;
+  font-size: 132px;
+  font-weight: 900;
+  letter-spacing: 0;
   white-space: nowrap;
   line-height: 1;
 }
 
+/* Guide: % is Poppins Black 68.6pt with baseline shift ~51.6pt */
 .ua-rank__pctsign {
-  font-size: 0.5em;
-  vertical-align: 0.75em;
-  margin-left: 0.04em;
+  font-size: 68.6px;
+  font-weight: 900;
+  line-height: 1;
+  margin-top: 20px;
+  margin-left: 0;
 }
 
 .ua-rank__zh {
-  left: 645px;
-  font-size: 64px;
+  left: 602px;
+  font-family: "GenKiGothic", "Noto Sans TC", sans-serif;
+  font-size: 66px;
   font-weight: 700;
   white-space: nowrap;
+  letter-spacing: 0;
 }
 
 .ua-rank__en {
-  left: 896px;
-  font-size: 60px;
+  left: 852px;
+  font-family: "Poppins", sans-serif;
+  font-size: 65px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   white-space: nowrap;
+}
+
+/* Count digits right-align to x≈1566; unit「人」fixed at x≈1574 */
+.ua-rank__count-num {
+  left: auto;
+  right: 261px;
+  font-family: "Poppins", sans-serif;
+  font-size: 46px;
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-align: right;
+  color: #fff;
+}
+
+.ua-rank__count-unit {
+  left: 1574px;
+  font-family: "GenKiGothic", "Noto Sans TC", sans-serif;
+  font-size: 31px;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: nowrap;
+  color: #fff;
 }
 
 .ua-rank__trend {
@@ -353,8 +424,7 @@
   width: 79px;
 }
 
-/* Loading rows use different columns on the align map:
-   symbols x 294 (same as pct), ??型 x 794, no en */
+/* Loading rows: symbols @ pct, ??型 @ 794 */
 .ua-layout--loading .ua-rank__pct {
   font-size: 96px;
   letter-spacing: 0.02em;

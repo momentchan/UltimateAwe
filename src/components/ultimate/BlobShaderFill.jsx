@@ -321,16 +321,19 @@ export default function BlobShaderFill({ entries, loadingBlend = 0 }) {
   return (
     <div className="ua-blobgpu">
       <Canvas
-        gl={(canvas) => {
+        // Flat 2D fill — disable depth on the WebGPURenderer only (not a Canvas DOM prop).
+        gl={(props) => {
           const renderer = new WebGPURenderer({
-            ...canvas,
+            ...props,
             powerPreference: "high-performance",
             antialias: true,
             alpha: true,
+            depth: false,
+            stencil: false,
           });
           return renderer.init().then(() => renderer);
         }}
-        dpr={[1, 2]}
+        dpr={1}
         orthographic
         camera={{ position: [0, 0, 1], zoom: 1, near: 0.1, far: 10 }}
       >
