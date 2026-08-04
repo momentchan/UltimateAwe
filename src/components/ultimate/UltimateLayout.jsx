@@ -238,7 +238,10 @@ export default function UltimateLayout({
   const empty = (data.total ?? 0) === 0;
   const resolvedFace =
     faceKind === "type" && empty ? "loading" : faceKind;
-  const mode = empty ? "full" : placeholderMode;
+  // Idle + no data → full loading placeholders. During reflect, honor the
+  // stage mode so the first cycle still gets % scramble / rank shuffle.
+  const mode =
+    placeholderMode !== "none" ? placeholderMode : empty ? "full" : "none";
 
   return (
     <div
