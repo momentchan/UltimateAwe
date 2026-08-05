@@ -2,6 +2,13 @@ import { useState } from "react";
 import { TYPES } from "./assets";
 import { TYPE_ORDER } from "./ultimateData";
 
+function formatCountdown(sec) {
+  const s = Math.max(0, Math.floor(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
+
 /**
  * Debug chrome: signal status, reflect triggers, and type counters.
  * Collapses to a compact chip instead of fully hiding.
@@ -13,10 +20,16 @@ export default function DebugPanel({
   onReflect,
   reflectDisabled,
   reflectPhase,
+  autoIntervalSec = 0,
+  autoCountdownSec = null,
   signalStatus = "idle",
   signalUrl = "",
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const counting =
+    autoIntervalSec > 0 &&
+    autoCountdownSec != null &&
+    (!reflectPhase || reflectPhase === "collect");
 
   if (collapsed) {
     return (
@@ -34,6 +47,11 @@ export default function DebugPanel({
           >
             WS
           </span>
+          {counting ? (
+            <span className="ua-debug__chip-countdown" title="Auto reflect">
+              {formatCountdown(autoCountdownSec)}
+            </span>
+          ) : null}
           <span className="ua-debug__chip-total">{data.total}</span>
           <span className="ua-debug__chip-action" aria-hidden>
             ▾
@@ -91,6 +109,15 @@ export default function DebugPanel({
         </div>
         {reflectPhase && reflectPhase !== "collect" && (
           <div className="ua-debug__phase">Phase: {reflectPhase}</div>
+        )}
+        {counting && (
+          <div className="ua-debug__phase ua-debug__countdown">
+            Auto in <b>{formatCountdown(autoCountdownSec)}</b>
+            <span className="ua-debug__countdown-interval">
+              {" "}
+              / {formatCountdown(autoIntervalSec)}
+            </span>
+          </div>
         )}
       </div>
 

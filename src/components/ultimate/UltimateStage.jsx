@@ -49,6 +49,41 @@ export default function UltimateStage({ showDebug = false }) {
     timings,
   });
 
+  const [autoCountdownSec, setAutoCountdownSec] = useState(null);
+
+  const triggerReflect = useCallback(
+    (mode) => {
+      setRankMoveMode(mode);
+      startReflect();
+    },
+    [startReflect],
+  );
+
+  // Auto-reflect countdown (Leva interval). Uses last During/Reveal mode.
+  useEffect(() => {
+    const interval = Math.max(0, Math.floor(Number(batchCtrl.intervalSec) || 0));
+    if (interval <= 0 || isRunning) {
+      setAutoCountdownSec(null);
+      return undefined;
+    }
+
+    let left = interval;
+    setAutoCountdownSec(left);
+
+    const id = window.setInterval(() => {
+      left -= 1;
+      if (left <= 0) {
+        window.clearInterval(id);
+        setAutoCountdownSec(0);
+        startReflect();
+        return;
+      }
+      setAutoCountdownSec(left);
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [batchCtrl.intervalSec, isRunning, startReflect]);
+
   useEffect(() => {
     const update = () => {
       const next = Math.min(
@@ -154,12 +189,11 @@ export default function UltimateStage({ showDebug = false }) {
           data={pendingData}
           onIncrement={incrementType}
           onReset={resetData}
-          onReflect={(mode) => {
-            setRankMoveMode(mode);
-            startReflect();
-          }}
+          onReflect={triggerReflect}
           reflectDisabled={isRunning}
           reflectPhase={phase}
+          autoIntervalSec={batchCtrl.intervalSec}
+          autoCountdownSec={autoCountdownSec}
           signalStatus={signalStatus}
           signalUrl={signalUrl}
         />

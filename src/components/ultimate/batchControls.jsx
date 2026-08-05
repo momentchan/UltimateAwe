@@ -10,8 +10,8 @@ export const BATCH_DEFAULTS = {
   shuffleSec: 0.45,
   /** Travel time when a bar slides between rank slots. */
   rankMoveSec: 1.0,
-  /** Reserved for auto reflect; not wired yet. */
-  intervalSec: 3 * 60,
+  /** Auto-reflect interval. 0 = off. Default 180s (3 min). */
+  intervalSec: 180,
 };
 
 const BATCH_SCHEMA = {
@@ -49,6 +49,13 @@ const BATCH_SCHEMA = {
     max: 2,
     step: 0.05,
     label: "Rank move (s)",
+  },
+  intervalSec: {
+    value: BATCH_DEFAULTS.intervalSec,
+    min: 0,
+    max: 30 * 60,
+    step: 5,
+    label: "Auto reflect every (s, 0=off)",
   },
 };
 
