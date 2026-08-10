@@ -21,8 +21,9 @@ function isTypingTarget(target) {
 /**
  * Batch buffer: increments only update pending counts.
  * Call `publish()` on reflect reveal to push pending → published display.
+ * @param {{ enabled?: boolean }} [options] When false, 1–5 keyboard input is ignored.
  */
-export default function useUltimateDebugData() {
+export default function useUltimateDebugData({ enabled = true } = {}) {
   const [pendingCounts, setPendingCounts] = useState(() => ({ ...EMPTY_COUNTS }));
   const [publishedCounts, setPublishedCounts] = useState(() => ({ ...EMPTY_COUNTS }));
   const previousRankRef = useRef(null);
@@ -65,6 +66,8 @@ export default function useUltimateDebugData() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return undefined;
+
     let delayId = null;
     let intervalId = null;
     let heldTypeId = null;
@@ -117,7 +120,7 @@ export default function useUltimateDebugData() {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", stopHold);
     };
-  }, [increment]);
+  }, [enabled, increment]);
 
   return {
     pendingData,

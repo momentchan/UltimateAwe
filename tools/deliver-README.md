@@ -51,14 +51,12 @@ npm run app
 
 ```text
 http://localhost:4173/?ws=ws://127.0.0.1:8765
-http://localhost:4173/debug?ws=ws://127.0.0.1:8765
 http://localhost:4173/sim?ws=ws://127.0.0.1:8765
 ```
 
 | 路徑 | 用途 |
 |------|------|
-| `/` | 展示畫面 |
-| `/debug` | Debug（可看 Signal 是否 connected） |
+| `/` | 展示畫面（按 **D** 開關 Debug panel；**H** 開關 Leva） |
 | `/sim` | 瀏覽器模擬送 `add`（可對照你的實作） |
 
 查這台電腦的區網 IP（給下一步連線用）：
@@ -118,7 +116,7 @@ Relay 會把訊息轉給其他連線中的 client（含網頁）。你這邊只�
 - [ ] Relay 顯示 listening `8765`
 - [ ] 防火牆允許入站 TCP **8765**
 - [ ] 網頁已用 `http://localhost:4173/?ws=ws://127.0.0.1:8765` 開啟
-- [ ] `/debug` 裡 Signal 為 `connected`
+- [ ] 按 **D** 開 Debug，Signal 為 `connected`
 - [ ] 送出 `add` 後，畫面／Debug 計數有增加
 
 ---

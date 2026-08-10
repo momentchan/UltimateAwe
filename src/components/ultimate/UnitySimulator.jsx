@@ -9,7 +9,7 @@ import "./unitySim.css";
 
 /**
  * Browser stand-in for the Unity app: connects to the same relay and sends add events.
- * Open at /sim (second tab) while the display runs on / or /debug.
+ * Open at /sim (second tab) while the display runs on /.
  */
 export default function UnitySimulator() {
   const [url, setUrl] = useState(() => defaultSignalWsUrl());

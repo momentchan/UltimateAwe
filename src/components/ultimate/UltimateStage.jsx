@@ -13,8 +13,10 @@ import "./ultimate.css";
  * Letterbox a fixed 2160x3840 design canvas into the viewport.
  * Wrapper uses scaled footprint so transform does not push content off-screen.
  * Display is always batch: counts buffer until a reflect cycle publishes them.
+ * Press D to toggle the debug panel (Leva is H, separate).
  */
-export default function UltimateStage({ showDebug = false }) {
+export default function UltimateStage() {
+  const [showDebug, setShowDebug] = useState(false);
   const [rankMoveMode, setRankMoveMode] = useState(RANK_MOVE_MODE.reveal);
   const [scale, setScale] = useState(1);
   const batchCtrl = useBatchCtrl();
@@ -22,7 +24,27 @@ export default function UltimateStage({ showDebug = false }) {
   const showGuide = Boolean(showDebug && debugCtrl.showAlignGuide);
 
   const { pendingData, publishedData, increment, reset, publish } =
-    useUltimateDebugData();
+    useUltimateDebugData({ enabled: showDebug });
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.ctrlKey || event.altKey || event.metaKey) return;
+      if (event.repeat) return;
+      const tag = event.target;
+      if (
+        tag instanceof HTMLInputElement ||
+        tag instanceof HTMLTextAreaElement ||
+        tag?.isContentEditable
+      ) {
+        return;
+      }
+      if (event.key !== "d" && event.key !== "D") return;
+      event.preventDefault();
+      setShowDebug((v) => !v);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const onRevealStart = useCallback(() => {
     publish();
