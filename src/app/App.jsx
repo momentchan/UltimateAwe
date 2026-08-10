@@ -6,12 +6,12 @@ import { BlobShaderControlsProvider } from "../components/ultimate/blobShaderCon
 import { BatchControlsProvider } from "../components/ultimate/batchControls";
 import { DebugControlsProvider } from "../components/ultimate/debugControls";
 
+/** Single display route. D = debug panel, H = Leva. `/sim` stays separate. */
 function DisplayApp() {
   return (
     <BlobShaderControlsProvider>
       <BatchControlsProvider>
         <DebugControlsProvider>
-          {/* Leva: H — separate from Debug panel (D) */}
           <LevaWrapper dock="top-right" initialHidden={true} />
           <UltimateStage />
         </DebugControlsProvider>

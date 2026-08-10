@@ -10,13 +10,12 @@ function formatCountdown(sec) {
 }
 
 /**
- * Debug chrome: signal status, reflect triggers, and type counters.
- * Collapses to a compact chip instead of fully hiding.
+ * Debug chrome: signal, reflect, type input, day history at bottom.
  */
 export default function DebugPanel({
   data,
   onIncrement,
-  onReset,
+  onResetDay,
   onReflect,
   reflectDisabled,
   reflectPhase,
@@ -24,12 +23,25 @@ export default function DebugPanel({
   autoCountdownSec = null,
   signalStatus = "idle",
   signalUrl = "",
+  dataEnv = "sandbox",
+  dateKey = "",
+  totalPending = 0,
+  totalPublished = 0,
+  todayAdded = 0,
+  dayHistory = [],
+  allowResetDay = false,
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const counting =
     autoIntervalSec > 0 &&
     autoCountdownSec != null &&
     (!reflectPhase || reflectPhase === "collect");
+  const phaseLive = reflectPhase && reflectPhase !== "collect";
+
+  const requestResetDay = (date) => {
+    if (!allowResetDay || !onResetDay) return;
+    onResetDay(date);
+  };
 
   if (collapsed) {
     return (
@@ -41,9 +53,10 @@ export default function DebugPanel({
           title="Expand debug panel"
         >
           <strong>Debug</strong>
+          <span className="ua-debug__chip-env">{dataEnv}</span>
           <span
             className={`ua-debug__chip-signal ua-debug__chip-signal--${signalStatus}`}
-            title={signalUrl}
+            title={signalUrl || signalStatus}
           >
             WS
           </span>
@@ -52,7 +65,9 @@ export default function DebugPanel({
               {formatCountdown(autoCountdownSec)}
             </span>
           ) : null}
-          <span className="ua-debug__chip-total">{data.total}</span>
+          <span className="ua-debug__chip-total" title="All-time published">
+            {totalPublished}
+          </span>
           <span className="ua-debug__chip-action" aria-hidden>
             ▾
           </span>
@@ -64,7 +79,16 @@ export default function DebugPanel({
   return (
     <aside className="ua-debug">
       <div className="ua-debug__header">
-        <strong>Debug</strong>
+        <div className="ua-debug__title-wrap">
+          <strong className="ua-debug__title">Debug</strong>
+          <span className="ua-debug__badge">{dataEnv}</span>
+          <span
+            className={`ua-debug__badge ua-debug__badge--${signalStatus}`}
+            title={signalUrl || signalStatus}
+          >
+            {signalStatus === "connected" ? "WS on" : "WS off"}
+          </span>
+        </div>
         <button
           type="button"
           className="ua-debug__collapse"
@@ -75,16 +99,17 @@ export default function DebugPanel({
         </button>
       </div>
 
-      <div className="ua-debug__section">
-        <div className="ua-debug__label">Signal relay</div>
-        <div className={`ua-debug__signal ua-debug__signal--${signalStatus}`}>
-          {signalStatus}
+      <div className="ua-debug__stats">
+        <div className="ua-debug__stat">
+          <span className="ua-debug__stat-label">All-time</span>
+          <span className="ua-debug__stat-value">{totalPublished}</span>
+          <span className="ua-debug__stat-sub">pending {totalPending}</span>
         </div>
-        {signalUrl ? (
-          <div className="ua-debug__signal-url" title={signalUrl}>
-            {signalUrl}
-          </div>
-        ) : null}
+        <div className="ua-debug__stat">
+          <span className="ua-debug__stat-label">Today</span>
+          <span className="ua-debug__stat-value">{todayAdded}</span>
+          <span className="ua-debug__stat-sub">{dateKey || "—"}</span>
+        </div>
       </div>
 
       <div className="ua-debug__section">
@@ -107,22 +132,23 @@ export default function DebugPanel({
             Reveal
           </button>
         </div>
-        {reflectPhase && reflectPhase !== "collect" && (
-          <div className="ua-debug__phase">Phase: {reflectPhase}</div>
-        )}
-        {counting && (
-          <div className="ua-debug__phase ua-debug__countdown">
-            Auto in <b>{formatCountdown(autoCountdownSec)}</b>
-            <span className="ua-debug__countdown-interval">
-              {" "}
-              / {formatCountdown(autoIntervalSec)}
-            </span>
+        {(phaseLive || counting) && (
+          <div className="ua-debug__meta">
+            {phaseLive ? <span>Phase {reflectPhase}</span> : null}
+            {counting ? (
+              <span>
+                Auto {formatCountdown(autoCountdownSec)}
+                <span className="ua-debug__meta-muted">
+                  {" "}
+                  / {formatCountdown(autoIntervalSec)}
+                </span>
+              </span>
+            ) : null}
           </div>
         )}
       </div>
 
       <div className="ua-debug__section ua-debug__section--input">
-        <div className="ua-debug__label">Input (1–5)</div>
         <div className="ua-debug__types">
           {TYPE_ORDER.map((typeId, index) => {
             const type = TYPES[typeId];
@@ -132,31 +158,62 @@ export default function DebugPanel({
                 key={typeId}
                 type="button"
                 onClick={() => onIncrement(typeId)}
-                title={`Press ${index + 1} to add ${type.en}`}
+                title={`${index + 1} · ${type.zh} ${type.en}`}
               >
                 <span
                   className="ua-debug__swatch"
                   style={{ background: type.color }}
                 />
                 <kbd>{index + 1}</kbd>
-                <span>{type.zh}</span>
-                <b>{data.counts[typeId]}</b>
-                <small>{entry?.percent ?? 0}%</small>
+                <span className="ua-debug__type-name">{type.zh}</span>
+                <b className="ua-debug__type-count">{data.counts[typeId]}</b>
+                <small className="ua-debug__type-pct">
+                  {entry?.percent ?? 0}%
+                </small>
               </button>
             );
           })}
         </div>
+
         <div className="ua-debug__summary">
-          <span>
-            Total <b>{data.total}</b>
-          </span>
-          <span>
-            Level <b>{data.level}</b>
-          </span>
-          <button type="button" onClick={onReset}>
-            Reset
-          </button>
+          <span className="ua-debug__summary-level">Lv {data.level}</span>
         </div>
+      </div>
+
+      <div className="ua-debug__section ua-debug__section--history">
+        <div className="ua-debug__label-row">
+          <span className="ua-debug__label">History</span>
+          <span className="ua-debug__level">{dayHistory.length} logged</span>
+        </div>
+        {dayHistory.length === 0 ? (
+          <div className="ua-debug__empty">No day logs yet</div>
+        ) : (
+          <ul className="ua-debug__days">
+            {dayHistory.map((day) => (
+              <li key={day.date} className="ua-debug__day">
+                <div className="ua-debug__day-main">
+                  <span className="ua-debug__day-date">
+                    {day.date}
+                    {day.date === dateKey ? (
+                      <span className="ua-debug__day-tag">today</span>
+                    ) : null}
+                  </span>
+                  <span className="ua-debug__day-total">+{day.totalAdded}</span>
+                </div>
+                {allowResetDay ? (
+                  <button
+                    type="button"
+                    className="ua-debug__day-reset"
+                      onClick={() => requestResetDay(day.date)}
+                    title={`Remove +${day.totalAdded} from all-time`}
+                  >
+                    Reset
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </aside>
   );

@@ -56,8 +56,15 @@ http://localhost:4173/sim?ws=ws://127.0.0.1:8765
 
 | 路徑 | 用途 |
 |------|------|
-| `/` | 展示畫面（按 **D** 開關 Debug panel；**H** 開關 Leva） |
-| `/sim` | 瀏覽器模擬送 `add`（可對照你的實作） |
+| `/` | 展示畫面（**D** 開關 Debug；**H** 開關 Leva） |
+| `/sim` | 瀏覽器模擬送 `add` |
+
+### 資料保存
+
+- 排名用**跨日累計**；每日另記當天增量（報表）。
+- `npm run dev` → sandbox 資料；正式包 → live 資料（自動分開）。
+- Debug History 可重設**單一日期**（從累計扣除當天增量）。
+- Relay 會備份到 `data/dev.json` / `data/main.json`（各一個檔）。
 
 查這台電腦的區網 IP（給下一步連線用）：
 

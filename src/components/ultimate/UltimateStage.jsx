@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import UltimateLayout, { RANK_MOVE_MODE } from "./UltimateLayout";
 import DebugPanel from "./DebugPanel";
 import useUltimateDebugData from "./useUltimateDebugData";
@@ -13,7 +13,7 @@ import "./ultimate.css";
  * Letterbox a fixed 2160x3840 design canvas into the viewport.
  * Wrapper uses scaled footprint so transform does not push content off-screen.
  * Display is always batch: counts buffer until a reflect cycle publishes them.
- * Press D to toggle the debug panel (Leva is H, separate).
+ * Press D to toggle the debug panel (Leva is H).
  */
 export default function UltimateStage() {
   const [showDebug, setShowDebug] = useState(false);
@@ -23,8 +23,28 @@ export default function UltimateStage() {
   const debugCtrl = useDebugCtrl();
   const showGuide = Boolean(showDebug && debugCtrl.showAlignGuide);
 
-  const { pendingData, publishedData, increment, reset, publish } =
-    useUltimateDebugData({ enabled: showDebug });
+  const persistSenderRef = useRef(null);
+
+  const {
+    pendingData,
+    publishedData,
+    increment,
+    resetDay,
+    publish,
+    hydrateFromRemote,
+    finishRemoteHydrate,
+    dataEnv,
+    dataLabel,
+    dateKey,
+    dayHistory,
+    totalPending,
+    totalPublished,
+    todayAdded,
+    needsRemoteHydrate,
+  } = useUltimateDebugData({
+    enabled: showDebug,
+    onPersist: (msg) => persistSenderRef.current?.(msg),
+  });
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -119,10 +139,13 @@ export default function UltimateStage() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const resetData = useCallback(() => {
-    cancelReflect();
-    reset();
-  }, [cancelReflect, reset]);
+  const resetDayData = useCallback(
+    (date) => {
+      cancelReflect();
+      resetDay(date);
+    },
+    [cancelReflect, resetDay],
+  );
 
   const incrementType = useCallback(
     (typeId, n = 1) => {
@@ -131,9 +154,16 @@ export default function UltimateStage() {
     [increment],
   );
 
-  const { status: signalStatus, url: signalUrl } = useSignalIngress({
+  const { status: signalStatus, url: signalUrl, sendPersist } = useSignalIngress({
     onAdd: incrementType,
+    dataEnv,
+    dateKey,
+    requestHydrate: needsRemoteHydrate,
+    onSnapshot: hydrateFromRemote,
+    onHydrateSettled: finishRemoteHydrate,
   });
+
+  persistSenderRef.current = sendPersist;
 
   const { faceKind, placeholderMode, layoutBlend } = useMemo(() => {
     if (phase === REFLECT_PHASE.fadeToGray) {
@@ -210,7 +240,7 @@ export default function UltimateStage() {
         <DebugPanel
           data={pendingData}
           onIncrement={incrementType}
-          onReset={resetData}
+          onResetDay={resetDayData}
           onReflect={triggerReflect}
           reflectDisabled={isRunning}
           reflectPhase={phase}
@@ -218,6 +248,13 @@ export default function UltimateStage() {
           autoCountdownSec={autoCountdownSec}
           signalStatus={signalStatus}
           signalUrl={signalUrl}
+          dataEnv={dataLabel}
+          dateKey={dateKey}
+          totalPending={totalPending}
+          totalPublished={totalPublished}
+          todayAdded={todayAdded}
+          dayHistory={dayHistory}
+          allowResetDay={showDebug}
         />
       )}
     </div>

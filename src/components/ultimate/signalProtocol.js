@@ -32,3 +32,18 @@ export function buildAddMessage(typeId, n = 1, id) {
   if (id != null) payload.id = id;
   return JSON.stringify(payload);
 }
+
+export function parseSignalMessage(raw) {
+  let msg;
+  try {
+    msg = JSON.parse(String(raw));
+  } catch {
+    return null;
+  }
+  if (!msg || typeof msg.op !== "string") return null;
+  return msg;
+}
+
+export function buildGetSnapshotMessage(env, date) {
+  return JSON.stringify({ op: "getSnapshot", env, date });
+}

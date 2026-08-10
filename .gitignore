@@ -3,3 +3,6 @@ node_modules/
 package-lock.json
 dist
 deliver/
+
+# Local count backups written by the signal relay
+/data/
