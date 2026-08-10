@@ -156,8 +156,18 @@ function RankingList({ entries, placeholderMode, shuffleMs, moveMs, rankMoveMode
                   </>
                 )}
               </span>
-              <span className="ua-rank__zh">{full ? "??型" : t.zh}</span>
-              <span className="ua-rank__en">{full ? "" : t.en}</span>
+              <span
+                className="ua-rank__zh"
+                style={full ? undefined : { color: t.color }}
+              >
+                {full ? "??型" : t.zh}
+              </span>
+              <span
+                className="ua-rank__en"
+                style={full ? undefined : { color: t.color }}
+              >
+                {full ? "" : t.en}
+              </span>
               {scrambled ? (
                 <>
                   <span className="ua-rank__count-num">???</span>
@@ -183,6 +193,15 @@ function RankingList({ entries, placeholderMode, shuffleMs, moveMs, rankMoveMode
   );
 }
 
+/** Radar markers on the design canvas (from RadarChart_2@ dots / labels). */
+const RADAR_MARKERS = [
+  { typeId: "absorb", left: 1077, top: 792, dotLeft: 1080, dotTop: 897 },
+  { typeId: "diffuse", left: 368, top: 955, dotLeft: 438, dotTop: 1048 },
+  { typeId: "transform", left: 1862, top: 955, dotLeft: 1764, dotTop: 1048 },
+  { typeId: "reflect", left: 418, top: 2178, dotLeft: 491, dotTop: 2093 },
+  { typeId: "withdraw", left: 1738, top: 2178, dotLeft: 1643, dotTop: 2093 },
+];
+
 /**
  * Hard-switch face by kind — no opacity crossfade (only blob color blends).
  * NormalFace / LoadingFace share the same full-sheet placement.
@@ -207,7 +226,25 @@ function Hero({ leadingTypeId, level, faceKind }) {
         alt=""
         draggable={false}
       />
-      <img className="ua-hero__radar" src={ASSETS.radar} alt="" draggable={false} />
+      {RADAR_MARKERS.map(({ typeId, left, top, dotLeft, dotTop }) => {
+        const t = TYPES[typeId];
+        return (
+          <div key={typeId} className="ua-hero__marker">
+            <span
+              className="ua-hero__dot"
+              style={{ left: dotLeft, top: dotTop, background: t.color }}
+              aria-hidden
+            />
+            <div
+              className="ua-hero__label"
+              style={{ left, top, color: t.color }}
+            >
+              <span className="ua-hero__label-zh">{t.zh}</span>
+              <span className="ua-hero__label-en">{t.en}</span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

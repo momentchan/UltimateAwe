@@ -199,17 +199,42 @@
   mix-blend-mode: normal;
 }
 
-.ua-hero__radar {
+/* Radar dots + labels — typed with TYPES[*].color (normal blend, not screen) */
+.ua-hero__dot {
   position: absolute;
-  /* RadarChart 3392x2992 (2x) => 1696x1496; align map content y 741-2223.
-     Canvas content is asymmetric: left 284px makes labels match the map exactly. */
-  left: 284px;
-  top: 740px;
-  width: 1696px;
-  height: auto;
-  pointer-events: none;
   z-index: 3;
-  mix-blend-mode: screen;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.ua-hero__label {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1.05;
+}
+
+.ua-hero__label-zh {
+  font-family: "GenKiGothic", "Noto Sans TC", sans-serif;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ua-hero__label-en {
+  font-family: "Poppins", sans-serif;
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 /* —— Bottom stack: distribution + ranks —— */

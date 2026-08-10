@@ -15,7 +15,8 @@ export const ASSETS = {
   },
   background: tex(PARTS, "Background_2@.png"),
   title: tex(PARTS, "Title_2@.png"),
-  radar: tex(PARTS, "RadarChart_2@.png"),
+  /** Unused in UI (labels/dots are HTML); kept for tooling / fallback. */
+  radar: tex(PARTS, "RadarChart_Dots_2@.png"),
   distributionBar: tex(PARTS, "Distribution Bar_2@.png"),
   dataBar: tex(PARTS, "Data Bar_2@.png"),
   crown: tex(PARTS, "crown_2@.png"),
@@ -30,40 +31,40 @@ export const ASSETS = {
 
 /** Personality type → expression sprites (Lv1–3). */
 export const TYPES = {
-  /* Colors sampled from align map distribution bar */
+  /* Official A-we IP digital swatches (數位用 Hex) */
   absorb: {
     id: "absorb",
     zh: "接住型",
     en: "Absorb",
-    color: "#EEEEEF",
+    color: "#c1c6c9",
     character: "Huggee",
   },
   reflect: {
     id: "reflect",
     zh: "反彈型",
     en: "Reflect",
-    color: "#D96A41",
+    color: "#ff6339",
     character: "Bounzee",
   },
   withdraw: {
     id: "withdraw",
     zh: "隱身型",
     en: "Withdraw",
-    color: "#2E6CB4",
+    color: "#006ebb",
     character: "Fadee",
   },
   transform: {
     id: "transform",
     zh: "轉化型",
     en: "Transform",
-    color: "#EDDC73",
+    color: "#f4eb45",
     character: "Twistee",
   },
   diffuse: {
     id: "diffuse",
     zh: "模糊型",
     en: "Diffuse",
-    color: "#B6A0D2",
+    color: "#bf9fd6",
     character: "Mistee",
   },
 };
