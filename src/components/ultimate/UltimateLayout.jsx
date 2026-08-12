@@ -121,7 +121,10 @@ function RankingList({ entries, placeholderMode, shuffleMs, moveMs, rankMoveMode
         const scrambled = full || placeholderMode === "percent";
         // Mode A: physical slot while shuffling (podium stays put).
         // Mode B / idle: entry index — publish() reorders and bars slide on reveal.
-        const slot = shuffle?.slots ? shuffle.slots[i] : i;
+        // Only use shuffle slots during the silver scramble; never keep them once
+        // real values are shown (avoids stale 2/4/5/3/1 badges on reveal).
+        const shuffling = placeholderMode === "percent" && moveSlots;
+        const slot = shuffling && shuffle?.slots ? shuffle.slots[i] : i;
         const crowned = slot < 2;
         const trend = shuffle?.trends ? shuffle.trends[i] : e.trend;
         return (
