@@ -166,9 +166,11 @@ export default function UltimateStage() {
   persistSenderRef.current = sendPersist;
 
   const { faceKind, placeholderMode, layoutBlend } = useMemo(() => {
+    // Reflect: keep current type eyes while FX fade in, then closed eyes + FX,
+    // then the updated type. No NormalFace / open-idle in the middle.
     if (phase === REFLECT_PHASE.fadeToGray) {
       return {
-        faceKind: "idle",
+        faceKind: "type",
         placeholderMode: "percent",
         layoutBlend: loadingBlend,
       };
@@ -196,6 +198,8 @@ export default function UltimateStage() {
     };
   }, [phase, loadingBlend, publishedData.total]);
 
+  const faceFx = phase === REFLECT_PHASE.collect ? 0 : layoutBlend;
+
   return (
     <div className="ua-viewport">
       <div
@@ -221,6 +225,9 @@ export default function UltimateStage() {
             rankShuffleMs={batchCtrl.shuffleSec * 1000}
             rankMoveMs={batchCtrl.rankMoveSec * 1000}
             rankMoveMode={rankMoveMode}
+            faceFx={faceFx}
+            faceShakePx={batchCtrl.faceShakePx}
+            faceNoise={batchCtrl.faceNoise}
           />
 
           {showGuide && (

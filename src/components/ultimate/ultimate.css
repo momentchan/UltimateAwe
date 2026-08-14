@@ -176,27 +176,49 @@
   z-index: 4;
 }
 
-.ua-hero__face {
+.ua-hero__face-anchor {
   position: absolute;
-  left: 50%;
-  /* Face sheet canvas maps onto blob bbox; center both at (1080, 1575) */
-  top: 1575px;
-  width: 1586px;
-  height: auto;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
+  width: 0;
+  height: 0;
   z-index: 2;
-  /* Face sheets are black-backed; screen drops pure black */
-  mix-blend-mode: screen;
+  pointer-events: none;
 }
 
-/* LoadingFace / NormalFace: same full sheet placement (features sit lower
-   in canvas than expression sprites). Matched to Align Loading.png face. */
-.ua-hero__face--full {
-  width: 1612px;
-  top: 1509px;
-  left: 1087px;
-  mix-blend-mode: normal;
+.ua-hero__face-grain {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 720px;
+  height: 420px;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  /* Soft ellipse so grain never reads as a rectangle */
+  -webkit-mask-image: radial-gradient(
+    ellipse 55% 50% at 50% 50%,
+    #000 0%,
+    #000 35%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(
+    ellipse 55% 50% at 50% 50%,
+    #000 0%,
+    #000 35%,
+    transparent 72%
+  );
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.85'/></svg>");
+  background-size: 160px 160px;
+}
+
+.ua-hero__face {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  pointer-events: none;
+  /* Face sheets are black-backed; screen drops pure black */
+  mix-blend-mode: screen;
 }
 
 /* Radar dots + labels — typed with TYPES[*].color (normal blend, not screen) */

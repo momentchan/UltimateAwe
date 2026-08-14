@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
-import { ASSETS, TYPES, faceAsset } from "./assets";
+import {
+  ASSETS,
+  TYPES,
+  FACE_EYE_TARGET,
+  allFaceUrls,
+  faceAsset,
+  facePlacement,
+} from "./assets";
 import BlobShaderFill from "./BlobShaderFill";
 import ScrambleText from "./ScrambleText";
+import useFaceGlitch from "./useFaceGlitch";
 import "./ultimate.css";
 
 function trendIcon(trend) {
@@ -205,30 +213,72 @@ const RADAR_MARKERS = [
   { typeId: "withdraw", left: 1738, top: 2178, dotLeft: 1643, dotTop: 2093 },
 ];
 
+let facesPreloaded = false;
+function preloadFaces() {
+  if (facesPreloaded || typeof Image === "undefined") return;
+  facesPreloaded = true;
+  for (const url of allFaceUrls()) {
+    const img = new Image();
+    img.src = url;
+  }
+}
+
 /**
  * Hard-switch face by kind — no opacity crossfade (only blob color blends).
- * NormalFace / LoadingFace share the same full-sheet placement.
+ * Fixed eye anchor; inner img is sized from metadata so src swaps do not reflow.
  * @param {'type' | 'idle' | 'loading'} faceKind
  */
-function Hero({ leadingTypeId, level, faceKind }) {
+function Hero({
+  leadingTypeId,
+  level,
+  faceKind,
+  faceFx = 0,
+  faceShakePx = 16,
+  faceNoise = 0.7,
+}) {
+  useEffect(() => {
+    preloadFaces();
+  }, []);
+
   let src = faceAsset(leadingTypeId, level);
-  let full = false;
-  if (faceKind === "idle") {
-    src = ASSETS.faces.normal;
-    full = true;
-  } else if (faceKind === "loading") {
-    src = ASSETS.faces.loading;
-    full = true;
-  }
+  if (faceKind === "idle") src = ASSETS.faces.normal;
+  else if (faceKind === "loading") src = ASSETS.faces.loading;
+  const place = facePlacement(faceKind, leadingTypeId, level);
+  const glitch = useFaceGlitch(faceFx);
+  const shakeX = glitch.x * faceShakePx * faceFx;
+  const shakeY = glitch.y * faceShakePx * faceFx;
 
   return (
     <div className="ua-hero">
-      <img
-        className={`ua-hero__face ${full ? "ua-hero__face--full" : ""}`}
-        src={src}
-        alt=""
-        draggable={false}
-      />
+      <div
+        className="ua-hero__face-anchor"
+        style={{
+          left: FACE_EYE_TARGET.x,
+          top: FACE_EYE_TARGET.y,
+          transform: `translate(${shakeX}px, ${shakeY}px)`,
+        }}
+      >
+        <img
+          className="ua-hero__face"
+          src={src}
+          alt=""
+          draggable={false}
+          style={{
+            width: place.width,
+            height: place.height,
+            transform: `translate(-${place.originX * 100}%, -${place.originY * 100}%)`,
+          }}
+        />
+        {faceFx > 0.02 && faceNoise > 0 && (
+          <div
+            className="ua-hero__face-grain"
+            style={{
+              opacity: 0.55 * faceNoise * faceFx,
+              backgroundPosition: `${glitch.seed * 40}px ${glitch.x * 80}px`,
+            }}
+          />
+        )}
+      </div>
       {RADAR_MARKERS.map(({ typeId, left, top, dotLeft, dotTop }) => {
         const t = TYPES[typeId];
         return (
@@ -261,6 +311,9 @@ function Hero({ leadingTypeId, level, faceKind }) {
  *   rankShuffleMs?: number,
  *   rankMoveMs?: number,
  *   rankMoveMode?: 'during' | 'reveal',
+ *   faceFx?: number,
+ *   faceShakePx?: number,
+ *   faceNoise?: number,
  * }} props
  * - `percent`: reflect transition — scramble percentages, keep real type names.
  * - `full`: nothing measured yet — scramble percentages and type names.
@@ -273,6 +326,9 @@ export default function UltimateLayout({
   rankShuffleMs = 450,
   rankMoveMs = 1000,
   rankMoveMode = RANK_MOVE_MODE.reveal,
+  faceFx = 0,
+  faceShakePx = 16,
+  faceNoise = 0.7,
 }) {
   const leading = data.entries[0]?.typeId ?? "absorb";
   const empty = (data.total ?? 0) === 0;
@@ -307,6 +363,9 @@ export default function UltimateLayout({
         leadingTypeId={leading}
         level={data.level ?? 1}
         faceKind={resolvedFace}
+        faceFx={faceFx}
+        faceShakePx={faceShakePx}
+        faceNoise={faceNoise}
       />
 
       <div className="ua-bottom">

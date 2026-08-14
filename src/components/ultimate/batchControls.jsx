@@ -10,6 +10,10 @@ export const BATCH_DEFAULTS = {
   shuffleSec: 0.45,
   /** Travel time when a bar slides between rank slots. */
   rankMoveSec: 1.0,
+  /** Face shake amplitude during reflect (px). 0 = off. */
+  faceShakePx: 16,
+  /** Face noise / displacement during reflect. 0 = off. */
+  faceNoise: 0.7,
   /** Auto-reflect interval. 0 = off. Default 180s (3 min). */
   intervalSec: 180,
 };
@@ -49,6 +53,20 @@ const BATCH_SCHEMA = {
     max: 2,
     step: 0.05,
     label: "Rank move (s)",
+  },
+  faceShakePx: {
+    value: BATCH_DEFAULTS.faceShakePx,
+    min: 0,
+    max: 40,
+    step: 1,
+    label: "Face shake (px)",
+  },
+  faceNoise: {
+    value: BATCH_DEFAULTS.faceNoise,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    label: "Face noise",
   },
   intervalSec: {
     value: BATCH_DEFAULTS.intervalSec,
