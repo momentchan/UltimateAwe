@@ -33,6 +33,32 @@ import {
 
 extend({ NodeMaterial });
 
+/**
+ * The shader subtree mounts after the stencil texture resolves. Re-apply the
+ * fixed canvas size at that point so WebGPU gets the same resize notification
+ * that previously only happened after manually resizing the browser.
+ */
+function ShaderReadyResize() {
+  const setSize = useThree((state) => state.setSize);
+  const invalidate = useThree((state) => state.invalidate);
+
+  useLayoutEffect(() => {
+    const resize = () => {
+      setSize(DESIGN.width, DESIGN.height, 0, 0);
+      invalidate();
+    };
+
+    const frame = requestAnimationFrame(resize);
+    const timer = window.setTimeout(resize, 250);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [invalidate, setSize]);
+
+  return null;
+}
+
 /* Transparent hole punched in Background_2@.png, in 1x design px */
 const HOLE = { x: 286, y: 993, w: 1585, h: 1094 };
 
@@ -344,6 +370,7 @@ export default function BlobShaderFill({ entries, loadingBlend = 0 }) {
             ctrl={ctrl}
             layerUniforms={layerUniforms}
           />
+          <ShaderReadyResize />
         </Suspense>
       </Canvas>
 
